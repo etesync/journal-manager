@@ -17,15 +17,18 @@ class RestView(View):
         else:
             entries = Entry.objects.filter(id__gt=last)
 
-        ret = map(lambda x: {'id': x.id, 'content': x.content.decode()},
+        ret = map(lambda x: {'id': x.id, 'content': x.content.decode(),
+                             'uuid': x.uuid},
                             entries)
         return JsonResponse({'entries': list(ret)})
 
     @csrf_exempt
     def put(self, request):
         entries = json.loads(request.body.decode())
+        print(entries)
         for entry in entries['entries']:
-            Entry(content=entry['content'].encode()).save()
+            Entry(content=entry['content'].encode(),
+                  uuid=entry['uuid']).save()
 
         res = JsonResponse({'ok': 1})
         res.status_code = 201
