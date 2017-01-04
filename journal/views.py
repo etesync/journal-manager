@@ -24,8 +24,8 @@ class RestView(View):
     @csrf_exempt
     def put(self, request):
         entries = json.loads(request.body.decode())
-        for entry in entries:
-            Entry(content=entry.encode()).save()
+        for entry in entries['entries']:
+            Entry(content=entry['content'].encode()).save()
 
         res = JsonResponse({'ok': 1})
         res.status_code = 201
