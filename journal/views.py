@@ -13,21 +13,22 @@ from .serializers import EntrySerializer
 class RestView(View):
     def get(self, request):
         last = request.GET.get('last', None)
-        if last is None:
-            entries = Entry.objects.all()
-        else:
-            last_entry = Entry.objects.get(uuid=last)
-            entries = Entry.objects.filter(id__gt=last_entry.id)
+        tag = request.GET.get('tag', None)
+        entries = Entry.objects.filter(tag=tag)
+        if last is not None:
+            last_entry = entries.get(uuid=last)
+            entries = entries.filter(id__gt=last_entry.id)
 
         serializer = EntrySerializer(entries, many=True)
         return JsonResponse({'entries': serializer.data})
 
     @csrf_exempt
     def put(self, request):
+        tag = request.GET.get('tag', None)
         body = JSONParser().parse(request)
         serializer = EntrySerializer(data=body['entries'], many=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(tag=tag)
             return JsonResponse({}, status=201)
 
         return JsonResponse(serializer.errors, status=400)
