@@ -25,9 +25,9 @@ class RestView(View):
     @csrf_exempt
     def put(self, request):
         body = json.loads(request.body.decode())
-        entries = EntrySerializer(data=body)
+        serializer = EntrySerializer(data=body)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data, status=201)
+            return JsonResponse({}, status=201)
 
         return JsonResponse(serializer.errors, status=400)
