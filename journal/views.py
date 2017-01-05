@@ -1,9 +1,9 @@
-import json
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.http import JsonResponse
+
+from rest_framework.parsers import JSONParser
 
 from .models import Entry
 from .serializers import EntrySerializer
@@ -24,8 +24,8 @@ class RestView(View):
 
     @csrf_exempt
     def put(self, request):
-        body = json.loads(request.body.decode())
-        serializer = EntrySerializer(data=body)
+        body = JSONParser().parse(request)
+        serializer = EntrySerializer(data=body['entries'], many=True)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse({}, status=201)
