@@ -4,4 +4,4 @@ from . import models
 class EntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Entry
-        fields = ('id', 'uuid', 'content')
+        fields = ('uuid', 'content')

@@ -16,7 +16,8 @@ class RestView(View):
         if last is None:
             entries = Entry.objects.all()
         else:
-            entries = Entry.objects.filter(id__gt=last)
+            last_entry = Entry.objects.get(uuid=last)
+            entries = Entry.objects.filter(id__gt=last_entry.id)
 
         serializer = EntrySerializer(entries, many=True)
         return JsonResponse({'entries': serializer.data})
