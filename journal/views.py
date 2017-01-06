@@ -21,8 +21,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
 
     def get_user_queryset(self, queryset, user):
-        if (self.request.user.is_authenticated()):
-            return queryset
+        return queryset.filter(journal__owner=self.request.user)
 
 
 class EntryViewSet(BaseViewSet):
@@ -49,7 +48,7 @@ class EntryViewSet(BaseViewSet):
 
     def put(self, request, journal):
         journal = uuid.UUID(journal)
-        journal_object = Journal.objects.get(uuid=journal)
+        journal_object = Journal.objects.get(uuid=journal, owner=self.request.user)
 
         serializer = self.serializer_class(data=request.data, many=True)
         if serializer.is_valid():
