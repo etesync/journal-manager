@@ -1,3 +1,5 @@
+import uuid
+
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -13,8 +15,8 @@ from .serializers import EntrySerializer
 class RestView(View):
     def get(self, request, journal):
         last = request.GET.get('last', None)
-        tag = journal
-        entries = Entry.objects.filter(tag=tag)
+        journal = uuid.UUID(journal)
+        entries = Entry.objects.filter(journal__uuid=journal)
         if last is not None:
             last_entry = entries.get(uuid=last)
             entries = entries.filter(id__gt=last_entry.id)
@@ -24,11 +26,13 @@ class RestView(View):
 
     @csrf_exempt
     def put(self, request, journal):
-        tag = journal
+        journal = uuid.UUID(journal)
+        journal_object = Entry.objects.get(uuid=journal)
+
         body = JSONParser().parse(request)
         serializer = EntrySerializer(data=body['entries'], many=True)
         if serializer.is_valid():
-            serializer.save(tag=tag)
+            serializer.save(journal=journal_object)
             return JsonResponse({}, status=201)
 
         return JsonResponse(serializer.errors, status=400)
