@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from .models import Entry, Journal
-from .serializers import EntrySerializer
+from .serializers import EntrySerializer, JournalSerializer
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -24,12 +24,22 @@ class BaseViewSet(viewsets.ModelViewSet):
         return queryset.filter(journal__owner=self.request.user)
 
 
+class JournalViewSet(BaseViewSet):
+    queryset = Journal.objects.all()
+    serializer_class = JournalSerializer
+
+    def get_queryset(self):
+        queryset = type(self).queryset
+        return queryset.filter(owner=self.request.user, deleted=False)
+
+
 class EntryViewSet(BaseViewSet):
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
 
     def get_queryset(self):
-        queryset =  self.get_user_queryset(type(self).queryset, self.request.user)
+        queryset = type(self).queryset
+        queryset = self.get_user_queryset(queryset, self.request.user)
         journal = uuid.UUID(self.kwargs['journal'])
         return queryset.filter(journal__uuid=journal)
 
