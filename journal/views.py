@@ -8,6 +8,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from .models import Entry, Journal
 from .serializers import EntrySerializer
@@ -15,11 +17,11 @@ from .serializers import EntrySerializer
 
 class BaseViewSet(viewsets.ModelViewSet):
     allowed_methods = ['GET', 'PUT']
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    permission_classes = (IsAuthenticated,)
 
     def get_user_queryset(self, queryset, user):
         if (self.request.user.is_authenticated()):
-            return queryset.filter(user=self.request.user)
-        else:
             return queryset
 
 
