@@ -16,7 +16,6 @@ from .serializers import EntrySerializer, JournalSerializer
 
 
 class BaseViewSet(viewsets.ModelViewSet):
-    allowed_methods = ['GET', 'PUT']
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
 
@@ -25,6 +24,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 
 class JournalViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'PUT', 'DELETE']
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
 
@@ -32,8 +32,16 @@ class JournalViewSet(BaseViewSet):
         queryset = type(self).queryset
         return queryset.filter(owner=self.request.user, deleted=False)
 
+    def destroy(self, request):
+        journal = self.get_object()
+        journal.deleted = True
+        journal.save()
+
+        return Response({})
+
 
 class EntryViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'PUT']
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
 
