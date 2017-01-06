@@ -11,9 +11,9 @@ from .serializers import EntrySerializer
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RestView(View):
-    def get(self, request):
+    def get(self, request, journal):
         last = request.GET.get('last', None)
-        tag = request.GET.get('tag', None)
+        tag = journal
         entries = Entry.objects.filter(tag=tag)
         if last is not None:
             last_entry = entries.get(uuid=last)
@@ -23,8 +23,8 @@ class RestView(View):
         return JsonResponse({'entries': serializer.data})
 
     @csrf_exempt
-    def put(self, request):
-        tag = request.GET.get('tag', None)
+    def put(self, request, journal):
+        tag = journal
         body = JSONParser().parse(request)
         serializer = EntrySerializer(data=body['entries'], many=True)
         if serializer.is_valid():
