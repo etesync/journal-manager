@@ -12,6 +12,7 @@ class BinaryBase64Field(serializers.Field):
 
 class EntrySerializer(serializers.ModelSerializer):
     content = BinaryBase64Field()
+
     class Meta:
         model = models.Entry
         fields = ('uuid', 'content')

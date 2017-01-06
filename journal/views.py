@@ -3,36 +3,55 @@ import uuid
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from django.http import JsonResponse
 
+from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 
-from .models import Entry
+from .models import Entry, Journal
 from .serializers import EntrySerializer
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class RestView(View):
-    def get(self, request, journal):
-        last = request.GET.get('last', None)
-        journal = uuid.UUID(journal)
-        entries = Entry.objects.filter(journal__uuid=journal)
+class BaseViewSet(viewsets.ModelViewSet):
+    allowed_methods = ['GET', 'PUT']
+
+    def get_user_queryset(self, queryset, user):
+        if (self.request.user.is_authenticated()):
+            return queryset.filter(user=self.request.user)
+        else:
+            return queryset
+
+
+class EntryViewSet(BaseViewSet):
+    queryset = Entry.objects.all()
+    serializer_class = EntrySerializer
+
+    def get_queryset(self):
+        queryset =  self.get_user_queryset(type(self).queryset, self.request.user)
+        journal = uuid.UUID(self.kwargs['journal'])
+        return queryset.filter(journal__uuid=journal)
+
+    def list(self, request, journal):
+        last = request.query_params.get('last', None)
         if last is not None:
-            last_entry = entries.get(uuid=last)
-            entries = entries.filter(id__gt=last_entry.id)
+            queryset = self.get_queryset()
 
-        serializer = EntrySerializer(entries, many=True)
-        return JsonResponse({'entries': serializer.data})
+            last_entry = queryset.get(uuid=last)
+            queryset = queryset.filter(id__gt=last_entry.id)
 
-    @csrf_exempt
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(serializer.data)
+
+        return super().list(self, request)
+
     def put(self, request, journal):
         journal = uuid.UUID(journal)
-        journal_object = Entry.objects.get(uuid=journal)
+        journal_object = Journal.objects.get(uuid=journal)
 
-        body = JSONParser().parse(request)
-        serializer = EntrySerializer(data=body['entries'], many=True)
+        serializer = self.serializer_class(data=request.data, many=True)
         if serializer.is_valid():
             serializer.save(journal=journal_object)
-            return JsonResponse({}, status=201)
+            return Response({}, status=status.HTTP_201_CREATED)
 
-        return JsonResponse(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
