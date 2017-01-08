@@ -3,6 +3,7 @@ import uuid
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework import viewsets
@@ -18,9 +19,6 @@ from .serializers import EntrySerializer, JournalSerializer
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
-
-    def get_user_queryset(self, queryset, user):
-        return queryset.filter(journal__owner=self.request.user)
 
 
 class JournalViewSet(BaseViewSet):
@@ -56,10 +54,9 @@ class EntryViewSet(BaseViewSet):
     lookup_field = 'uuid'
 
     def get_queryset(self):
-        queryset = type(self).queryset
-        queryset = self.get_user_queryset(queryset, self.request.user)
         journal = uuid.UUID(self.kwargs['journal'])
-        return queryset.filter(journal__uuid=journal)
+        return type(self).queryset.filter(journal__owner=self.request.user,
+                                          journal__uuid=journal)
 
     def list(self, request, journal):
         last = request.query_params.get('last', None)
@@ -75,10 +72,10 @@ class EntryViewSet(BaseViewSet):
         return super().list(self, request)
 
     def put(self, request, journal):
-        journal = uuid.UUID(journal)
-        journal_object = Journal.objects.get(uuid=journal, owner=self.request.user)
+        journal_object = get_object_or_404(Journal, owner=self.request.user, uuid=uuid.UUID(journal))
 
-        serializer = self.serializer_class(data=request.data, many=True)
+        many = isinstance(request.data, list)
+        serializer = self.serializer_class(data=request.data, many=many)
         if serializer.is_valid():
             serializer.save(journal=journal_object)
             return Response({}, status=status.HTTP_201_CREATED)
