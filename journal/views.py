@@ -13,18 +13,27 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from .models import Entry, Journal
-from .serializers import EntrySerializer, JournalSerializer
+from .serializers import EntrySerializer, JournalSerializer, JournalUpdateSerializer
 
 
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (IsAuthenticated,)
 
+    def get_serializer_class(self):
+        serializer_class = self.serializer_class
+
+        if self.request.method == 'PUT':
+            serializer_class = getattr(self, 'serializer_update_class', serializer_class)
+
+        return serializer_class
+
 
 class JournalViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
+    serializer_update_class = JournalUpdateSerializer
     lookup_field = 'uuid'
 
     def get_queryset(self):

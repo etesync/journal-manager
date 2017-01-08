@@ -158,6 +158,18 @@ class ApiJournalTestCase(BaseTestCase):
         response = self.client.post(reverse('journal-list'), self.serializer(journal).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_read_only(self):
+        """Check all read-only objects/methods are really read only"""
+        journal = models.Journal(owner=self.user1, uuid=uuid.uuid4(), content=b'test')
+        journal.save()
+        self.client.force_authenticate(user=self.user1)
+
+        # Not allowed to change UUID
+        journal2 = models.Journal(owner=self.user1, uuid=uuid.uuid4(), content=b'test')
+        response = self.client.put(reverse('journal-detail', kwargs={'uuid': journal.uuid}), self.serializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(journal, models.Journal.objects.get(uuid=journal.uuid))
+
 
 class ApiEntryTestCase(BaseTestCase):
     def setUp(self):
@@ -287,3 +299,15 @@ class ApiEntryTestCase(BaseTestCase):
         response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_read_only(self):
+        """Check all read-only objects/methods are really read only"""
+        # This object should be read-only anyway, but in case we ever change that, test the harder constraints.
+        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'test')
+        entry.save()
+        self.client.force_authenticate(user=self.user1)
+
+        # Not allowed to change UUID
+        entry2 = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'test')
+        response = self.client.put(reverse('entry-detail', kwargs={'uuid': entry.uuid, 'journal': self.journal.uuid}), self.serializer(entry2).data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(entry, models.Entry.objects.get(uuid=entry.uuid))

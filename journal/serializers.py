@@ -20,6 +20,11 @@ class JournalSerializer(serializers.ModelSerializer):
         fields = ('uuid', 'content')
 
 
+class JournalUpdateSerializer(JournalSerializer):
+    class Meta(JournalSerializer.Meta):
+        fields = ('content', )
+
+
 class EntrySerializer(serializers.ModelSerializer):
     content = BinaryBase64Field()
 
