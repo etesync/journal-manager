@@ -97,8 +97,11 @@ class ApiJournalTestCase(BaseTestCase):
         self.assertDictEqual(response.data, self.serializer(journal).data)
 
         # Update
-        self.client.force_authenticate(user=self.user1)
         response = self.client.put(reverse('journal-detail', kwargs={'uuid': journal.uuid}), self.serializer(journal).data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Partial update
+        response = self.client.patch(reverse('journal-detail', kwargs={'uuid': journal.uuid}), self.serializer(journal).data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # List
@@ -247,6 +250,10 @@ class ApiEntryTestCase(BaseTestCase):
 
         # Update
         response = self.client.put(reverse('entry-detail', kwargs={'uuid': entry.uuid, 'journal': self.journal.uuid}), self.serializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Partial update
+        response = self.client.patch(reverse('entry-detail', kwargs={'uuid': entry.uuid, 'journal': self.journal.uuid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # List
