@@ -27,17 +27,26 @@ class JournalViewSet(BaseViewSet):
     allowed_methods = ['GET', 'PUT', 'DELETE']
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
+    lookup_field = 'uuid'
 
     def get_queryset(self):
         queryset = type(self).queryset
         return queryset.filter(owner=self.request.user, deleted=False)
 
-    def destroy(self, request):
+    def destroy(self, request, uuid=None):
         journal = self.get_object()
         journal.deleted = True
         journal.save()
 
         return Response({})
+
+    def put(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=self.request.user)
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EntryViewSet(BaseViewSet):
