@@ -81,3 +81,15 @@ class EntryViewSet(BaseViewSet):
             return Response({}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, journal, uuid=None):
+        # FIXME: This shouldn't be needed. Doesn't work without for some reason.
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, journal, uuid=None):
+        self.get_object()
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def partial_update(self, request, journal, uuid=None):
+        self.get_object()
+        return Response(status=status.HTTP_403_FORBIDDEN)
