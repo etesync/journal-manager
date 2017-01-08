@@ -38,7 +38,7 @@ class JournalViewSet(BaseViewSet):
         journal.deleted = True
         journal.save()
 
-        return Response({})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request):
         serializer = self.serializer_class(data=request.data)
