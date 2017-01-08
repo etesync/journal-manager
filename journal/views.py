@@ -53,6 +53,7 @@ class EntryViewSet(BaseViewSet):
     allowed_methods = ['GET', 'PUT']
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
+    lookup_field = 'uuid'
 
     def get_queryset(self):
         queryset = type(self).queryset
