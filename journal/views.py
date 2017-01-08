@@ -22,7 +22,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 
 class JournalViewSet(BaseViewSet):
-    allowed_methods = ['GET', 'PUT', 'DELETE']
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
     lookup_field = 'uuid'
@@ -38,7 +38,7 @@ class JournalViewSet(BaseViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def put(self, request):
+    def create(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=self.request.user)
@@ -48,7 +48,7 @@ class JournalViewSet(BaseViewSet):
 
 
 class EntryViewSet(BaseViewSet):
-    allowed_methods = ['GET', 'PUT']
+    allowed_methods = ['GET', 'POST']
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
     lookup_field = 'uuid'
@@ -71,7 +71,7 @@ class EntryViewSet(BaseViewSet):
 
         return super().list(self, request)
 
-    def put(self, request, journal):
+    def create(self, request, journal):
         journal_object = get_object_or_404(Journal, owner=self.request.user, uuid=uuid.UUID(journal))
 
         many = isinstance(request.data, list)
