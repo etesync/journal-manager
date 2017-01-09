@@ -120,6 +120,15 @@ class ApiJournalTestCase(BaseTestCase):
         response = self.client.get(reverse('journal-list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+        ## And that we can't update it
+        journal2 = models.Journal.objects.get(uuid=journal.uuid)
+        journal2.content = b'different'
+        response = self.client.put(reverse('journal-detail', kwargs={'uuid': journal.uuid}), self.serializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        journal2 = models.Journal.objects.get(uuid=journal.uuid)
+        self.assertEqual(journal.content, journal2.content)
+
         journal = models.Journal.objects.get(uuid=journal.uuid)
         self.assertEqual(journal.deleted, True)
 
