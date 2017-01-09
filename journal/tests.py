@@ -331,6 +331,16 @@ class ApiEntryTestCase(BaseTestCase):
         response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        # Add multiple with one existing. No update to nothing.
+        multi = [models.Entry(uuid=uuid.uuid4(), content=b'test'), entry, models.Entry(uuid=uuid.uuid4(), content=b'test')]
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        ## Verify we got as many we expected (none)
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+
     def test_read_only(self):
         """Check all read-only objects/methods are really read only"""
         # This object should be read-only anyway, but in case we ever change that, test the harder constraints.
