@@ -8,8 +8,14 @@ class Journal(models.Model):
     content = models.BinaryField(editable=True, blank=False, null=False)
     deleted = models.BooleanField(default=False)
 
+    def __str__(self):
+        return "Journal<{}>".format(self.uuid)
+
 
 class Entry(models.Model):
     uuid = models.UUIDField(db_index=True, unique=True, blank=False, null=False)
     content = models.BinaryField(editable=True, blank=False, null=False)
     journal = models.ForeignKey(Journal)
+
+    def __str__(self):
+        return "Entry<{}>".format(self.uuid)
