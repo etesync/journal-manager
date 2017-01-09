@@ -81,6 +81,15 @@ class EntryViewSet(BaseViewSet):
         return super().list(self, request)
 
     def create(self, request, journal):
+        last = request.query_params.get('last', None)
+        if last is not None:
+            queryset = self.get_queryset()
+
+            last_entry = get_object_or_404(queryset, uuid=last)
+            last_in_db = queryset.last()
+            if last_entry != last_in_db:
+                return Response({}, status=status.HTTP_409_CONFLICT)
+
         journal_object = get_object_or_404(Journal, owner=self.request.user, uuid=uuid.UUID(journal))
 
         many = isinstance(request.data, list)

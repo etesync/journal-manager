@@ -333,8 +333,8 @@ class ApiEntryTestCase(BaseTestCase):
         # Not saved on purpose
         entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'1')
         entry.save()
-        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'2')
-        entry.save()
+        entry2 = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'2')
+        entry2.save()
         entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'3')
         entry.save()
         self.client.force_authenticate(user=self.user1)
@@ -360,4 +360,18 @@ class ApiEntryTestCase(BaseTestCase):
 
         # Non-existent last
         response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(uuid.uuid4()))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Add
+        ## With correct last
+        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'3')
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(models.Entry.objects.last().uuid), self.serializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        ## With incorrect last
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(entry2.uuid), self.serializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+        ## With non-existing last
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(uuid.uuid4()), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
