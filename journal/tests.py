@@ -327,3 +327,37 @@ class ApiEntryTestCase(BaseTestCase):
         response = self.client.put(reverse('entry-detail', kwargs={'uuid': entry.uuid, 'journal': self.journal.uuid}), self.serializer(entry2).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(entry, models.Entry.objects.get(uuid=entry.uuid))
+
+    def test_fetch_with_last(self):
+        """Test using the 'last' query param"""
+        # Not saved on purpose
+        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'1')
+        entry.save()
+        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'2')
+        entry.save()
+        entry = models.Entry(journal=self.journal, uuid=uuid.uuid4(), content=b'3')
+        entry.save()
+        self.client.force_authenticate(user=self.user1)
+
+        # List
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(response.data[0]['uuid']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(response.data[0]['uuid']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        ## Also verify it's really the one we expect to be last
+        self.assertEqual(uuid.UUID(response.data[0]['uuid']), entry.uuid)
+
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(response.data[0]['uuid']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+        # Non-existent last
+        response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uuid}) + '?last={}'.format(uuid.uuid4()))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
