@@ -72,7 +72,7 @@ class EntryViewSet(BaseViewSet):
         if last is not None:
             queryset = self.get_queryset()
 
-            last_entry = queryset.get(uuid=last)
+            last_entry = get_object_or_404(queryset, uuid=last)
             queryset = queryset.filter(id__gt=last_entry.id)
 
             serializer = self.serializer_class(queryset, many=True)
