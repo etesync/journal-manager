@@ -1,5 +1,3 @@
-import uuid
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -34,13 +32,13 @@ class JournalViewSet(BaseViewSet):
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
     serializer_update_class = JournalUpdateSerializer
-    lookup_field = 'uuid'
+    lookup_field = 'uid'
 
     def get_queryset(self):
         queryset = type(self).queryset
         return queryset.filter(owner=self.request.user, deleted=False)
 
-    def destroy(self, request, uuid=None):
+    def destroy(self, request, uid=None):
         journal = self.get_object()
         journal.deleted = True
         journal.save()
@@ -60,19 +58,19 @@ class EntryViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST']
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
-    lookup_field = 'uuid'
+    lookup_field = 'uid'
 
     def get_queryset(self):
-        journal = uuid.UUID(self.kwargs['journal'])
+        journal = self.kwargs['journal']
         return type(self).queryset.filter(journal__owner=self.request.user,
-                                          journal__uuid=journal)
+                                          journal__uid=journal)
 
     def list(self, request, journal):
         last = request.query_params.get('last', None)
         if last is not None:
             queryset = self.get_queryset()
 
-            last_entry = get_object_or_404(queryset, uuid=last)
+            last_entry = get_object_or_404(queryset, uid=last)
             queryset = queryset.filter(id__gt=last_entry.id)
 
             serializer = self.serializer_class(queryset, many=True)
@@ -85,12 +83,12 @@ class EntryViewSet(BaseViewSet):
         if last is not None:
             queryset = self.get_queryset()
 
-            last_entry = get_object_or_404(queryset, uuid=last)
+            last_entry = get_object_or_404(queryset, uid=last)
             last_in_db = queryset.last()
             if last_entry != last_in_db:
                 return Response({}, status=status.HTTP_409_CONFLICT)
 
-        journal_object = get_object_or_404(Journal, owner=self.request.user, uuid=uuid.UUID(journal))
+        journal_object = get_object_or_404(Journal, owner=self.request.user, uid=journal)
 
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
@@ -100,14 +98,14 @@ class EntryViewSet(BaseViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, journal, uuid=None):
+    def destroy(self, request, journal, uid=None):
         # FIXME: This shouldn't be needed. Doesn't work without for some reason.
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def update(self, request, journal, uuid=None):
+    def update(self, request, journal, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)
 
-    def partial_update(self, request, journal, uuid=None):
+    def partial_update(self, request, journal, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)

@@ -17,7 +17,7 @@ class JournalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Journal
-        fields = ('uuid', 'content')
+        fields = ('uid', 'content')
 
 
 class JournalUpdateSerializer(JournalSerializer):
@@ -30,4 +30,4 @@ class EntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Entry
-        fields = ('uuid', 'content')
+        fields = ('uid', 'content')
