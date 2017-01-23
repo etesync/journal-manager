@@ -68,9 +68,9 @@ class EntryViewSet(BaseViewSet):
     lookup_field = 'uid'
 
     def get_queryset(self):
-        journal = self.kwargs['journal']
-        return type(self).queryset.filter(journal__owner=self.request.user,
-                                          journal__uid=journal)
+        journal_uid = self.kwargs['journal']
+        journal = get_object_or_404(Journal, owner=self.request.user, uid=journal_uid)
+        return type(self).queryset.filter(journal__pk=journal.pk)
 
     def list(self, request, journal):
         last = request.query_params.get('last', None)

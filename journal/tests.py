@@ -221,8 +221,7 @@ class ApiEntryTestCase(BaseTestCase):
 
         self.client.force_authenticate(user=self.user2)
         response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uid}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertListEqual(response.data, [])
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Get
         self.client.force_authenticate(user=self.user1)
