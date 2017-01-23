@@ -8,9 +8,8 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework.test import force_authenticate
 
-from . import models, views, serializers
+from . import models, serializers
 
 
 User = get_user_model()
