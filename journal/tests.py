@@ -106,6 +106,9 @@ class ApiJournalTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictEqual(response.data, self.serializer(journal).data)
 
+        response = self.client.get(reverse('journal-detail', kwargs={'uid': self.get_random_hash()}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
         # Update
         response = self.client.put(reverse('journal-detail', kwargs={'uid': journal.uid}), self.serializer(journal).data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
