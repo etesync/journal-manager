@@ -1,3 +1,4 @@
+from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -48,7 +49,13 @@ class JournalViewSet(BaseViewSet):
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save(owner=self.request.user)
+            try:
+                with transaction.atomic():
+                    serializer.save(owner=self.request.user)
+            except IntegrityError:
+                content = {'error': 'IntegrityError'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
             return Response({}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -93,7 +100,13 @@ class EntryViewSet(BaseViewSet):
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
         if serializer.is_valid():
-            serializer.save(journal=journal_object)
+            try:
+                with transaction.atomic():
+                    serializer.save(journal=journal_object)
+            except IntegrityError:
+                content = {'error': 'IntegrityError'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
             return Response({}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
