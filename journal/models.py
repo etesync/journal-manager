@@ -28,6 +28,7 @@ class Entry(models.Model):
 
     class Meta:
         unique_together = ('uid', 'journal')
+        ordering = ['id']
 
     def __str__(self):
         return "Entry<{}>".format(self.uid)
