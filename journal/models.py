@@ -8,7 +8,7 @@ Sha256Validator = RegexValidator(regex=r'[a-fA-F0-9]{64}', message='Not a sha256
 
 class Journal(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                            max_length=64, validators=[Sha256Validator])
+                           max_length=64, validators=[Sha256Validator])
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.BinaryField(editable=True, blank=False, null=False)
     deleted = models.BooleanField(default=False)
@@ -22,7 +22,7 @@ class Journal(models.Model):
 
 class Entry(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                            max_length=64, validators=[Sha256Validator])
+                           max_length=64, validators=[Sha256Validator])
     content = models.BinaryField(editable=True, blank=False, null=False)
     journal = models.ForeignKey(Journal)
 
