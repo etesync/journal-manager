@@ -4,16 +4,16 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
+from . import app_settings
 from .models import Entry, Journal
 from .serializers import EntrySerializer, JournalSerializer, JournalUpdateSerializer
 
 
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = app_settings.API_PERMISSIONS
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
