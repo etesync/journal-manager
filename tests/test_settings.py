@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'rest_framework',
-    'journal',
+    'journal.apps.JournalConfig',
     'tests',
 ]
 
