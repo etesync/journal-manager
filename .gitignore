@@ -1,0 +1,8 @@
+/db.sqlite3
+Session.vim
+/local_settings.py
+/.venv
+/.coverage
+
+__pycache__
+.*.swp
