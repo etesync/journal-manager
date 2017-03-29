@@ -17,7 +17,7 @@ class JournalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Journal
-        fields = ('uid', 'content')
+        fields = ('version', 'uid', 'content')
 
 
 class JournalUpdateSerializer(JournalSerializer):

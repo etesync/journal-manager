@@ -194,6 +194,31 @@ class ApiJournalTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(journal, models.Journal.objects.get(uid=journal.uid))
 
+        # Not allowed to change version
+        journal.version = 137
+        response = self.client.put(reverse('journal-detail', kwargs={'uid': journal.uid}), self.serializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(journal, models.Journal.objects.get(uid=journal.uid))
+
+    def test_version(self):
+        """Check version behaves correctly"""
+        journal = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'test')
+        journal.save()
+        self.client.force_authenticate(user=self.user1)
+
+        # Default version is 1
+        response = self.client.get(reverse('journal-detail', kwargs={'uid': journal.uid}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Saving version works
+        journal = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'test', version=12)
+        response = self.client.post(reverse('journal-list'), self.serializer(journal).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(journal.version, models.Journal.objects.get(uid=journal.uid).version)
+
+        # Version readonly is handled in test_read_only
+        pass
+
     def test_filler(self):
         """Extra calls to cheat coverage (things we don't really care about)"""
         str(models.Journal(uid=self.get_random_hash(), content=b'1'))
