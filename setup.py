@@ -17,7 +17,7 @@ setup(
     long_description=README,
     url='https://www.etesync.com/',
     author='EteSync',
-    author_email='contact.journal@etesync.com',
+    author_email='development@etesync.com',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
