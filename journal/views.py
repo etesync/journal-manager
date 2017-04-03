@@ -1,5 +1,10 @@
+from django.conf import settings
+from django.contrib.auth import login
 from django.db import IntegrityError, transaction
+from django.http import HttpResponseBadRequest, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from rest_framework import status
 from rest_framework import viewsets
@@ -118,3 +123,24 @@ class EntryViewSet(BaseViewSet):
     def partial_update(self, request, journal, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+@csrf_exempt
+@require_POST
+def reset(request):
+    # Only run when in DEBUG mode! It's only used for tests
+    if not settings.DEBUG:
+        return HttpResponseBadRequest("Only allowed in debug mode.")
+
+    user, token = TokenAuthentication().authenticate(request)
+
+    login(request, user)
+
+    # Hardcoded user, for extra safety
+    if request.user.email != 'test@localhost':
+        return HttpResponseBadRequest("Endpoint not allowed for user.")
+
+    # Delete all of the journal data for this user for a clear test env
+    request.user.journal_set.all().delete()
+
+    return HttpResponse()

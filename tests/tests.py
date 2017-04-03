@@ -438,3 +438,14 @@ class ApiEntryTestCase(BaseTestCase):
     def test_filler(self):
         """Extra calls to cheat coverage (things we don't really care about)"""
         str(models.Entry(uid=self.get_random_hash(), content=b'1'))
+
+
+class DebugOnlyTestCase(BaseTestCase):
+    def test_only_debug(self):
+        """This endpoint should only be allowed in debug mode"""
+        user = User.objects.create(username='test@localhost', email='test@localhost')
+        self.raw_client.force_login(user=user)
+
+        response = self.raw_client.post(reverse('reset_debug'), {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.content, b'Only allowed in debug mode.')
