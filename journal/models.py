@@ -12,6 +12,7 @@ class Journal(models.Model):
     version = models.PositiveSmallIntegerField(default=1)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.BinaryField(editable=True, blank=False, null=False)
+    modified = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
 
     class Meta:
