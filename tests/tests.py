@@ -268,7 +268,7 @@ class ApiEntryTestCase(BaseTestCase):
         # Add to a different user's journal
         entry.uid = self.get_random_hash()
         self.client.force_authenticate(user=self.user1)
-        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         entry.uid = self.get_random_hash()
@@ -294,7 +294,7 @@ class ApiEntryTestCase(BaseTestCase):
 
         # Add multiple
         multi = [models.Entry(uid=self.get_random_hash(), content=b'test'), models.Entry(uid=self.get_random_hash(), content=b'test'), models.Entry(uid=self.get_random_hash(), content=b'test')]
-        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         ## Verify we got as many we expected
         response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uid}))
@@ -361,13 +361,13 @@ class ApiEntryTestCase(BaseTestCase):
         entry.content = b'test'
         response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Add multiple with one existing. No update to nothing.
         multi = [models.Entry(uid=self.get_random_hash(), content=b'test'), entry, models.Entry(uid=self.get_random_hash(), content=b'test')]
         response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         ## Verify we got as many we expected (none)
         response = self.client.get(reverse('entry-list', kwargs={'journal': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -435,6 +435,10 @@ class ApiEntryTestCase(BaseTestCase):
         ## With non-existing last
         response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}) + '?last={}'.format(self.get_random_hash()), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        ## Missing a last
+        response = self.client.post(reverse('entry-list', kwargs={'journal': self.journal.uid}), self.serializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_filler(self):
         """Extra calls to cheat coverage (things we don't really care about)"""
