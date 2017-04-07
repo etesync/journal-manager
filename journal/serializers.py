@@ -1,7 +1,10 @@
 import base64
 
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from . import models
+
+User = get_user_model()
 
 
 class BinaryBase64Field(serializers.Field):
@@ -14,10 +17,25 @@ class BinaryBase64Field(serializers.Field):
 
 class JournalSerializer(serializers.ModelSerializer):
     content = BinaryBase64Field()
+    owner = serializers.SlugRelatedField(
+        slug_field='email',
+        read_only=True
+    )
+    key = serializers.SerializerMethodField('get_key_from_context')
 
     class Meta:
         model = models.Journal
-        fields = ('version', 'uid', 'content')
+        fields = ('version', 'uid', 'content', 'owner', 'key')
+
+    def get_key_from_context(self, obj):
+        request = self.context.get('request', None)
+        if request is not None:
+            try:
+                member = obj.members.get(user=request.user)
+                serialized_member = JournalMemberSerializer(member)
+                return serialized_member.data['key']
+            except models.JournalMember.DoesNotExist:
+                pass
 
 
 class JournalUpdateSerializer(JournalSerializer):
@@ -45,3 +63,15 @@ class UserInfoSerializer(serializers.ModelSerializer):
 class UserInfoPublicSerializer(UserInfoSerializer):
     class Meta(JournalSerializer.Meta):
         fields = ('version', 'pubkey')
+
+
+class JournalMemberSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        slug_field='email',
+        queryset=User.objects
+    )
+    key = BinaryBase64Field()
+
+    class Meta:
+        model = models.JournalMember
+        fields = ('user', 'key')

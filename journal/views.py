@@ -1,7 +1,8 @@
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import login, get_user_model
 from django.db import IntegrityError, transaction
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.db.models import Q
+from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -10,13 +11,18 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.decorators import detail_route
 
 from . import app_settings, permissions
-from .models import Entry, Journal, UserInfo
+from .models import Entry, Journal, UserInfo, JournalMember
 from .serializers import (
         EntrySerializer, JournalSerializer, JournalUpdateSerializer,
-        UserInfoSerializer, UserInfoPublicSerializer
+        UserInfoSerializer, UserInfoPublicSerializer,
+        JournalMemberSerializer
     )
+
+
+User = get_user_model()
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -31,9 +37,15 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         return serializer_class
 
+    def get_journal_queryset(self, queryset):
+        user = self.request.user
+        return queryset.filter(Q(owner=user) | Q(members__user=user),
+                               deleted=False)
+
 
 class JournalViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsOwnerOrReadOnly, )
     queryset = Journal.objects.all()
     serializer_class = JournalSerializer
     serializer_update_class = JournalUpdateSerializer
@@ -41,7 +53,7 @@ class JournalViewSet(BaseViewSet):
 
     def get_queryset(self):
         queryset = type(self).queryset
-        return queryset.filter(owner=self.request.user, deleted=False)
+        return self.get_journal_queryset(queryset)
 
     def destroy(self, request, uid=None):
         journal = self.get_object()
@@ -64,6 +76,44 @@ class JournalViewSet(BaseViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def list(self, request):
+        queryset = self.get_queryset()
+
+        serializer = self.serializer_class(queryset, context={'request': request}, many=True)
+        return Response(serializer.data)
+
+    # FIXME: Change into a nested resource
+    @detail_route(methods=('GET', 'POST', 'DELETE'))
+    def members(self, request, uid=None):
+        journal = self.get_object()
+        if journal.owner != self.request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if self.request.method == 'GET':
+            members = JournalMember.objects.filter(journal=journal)
+
+            serializer = JournalMemberSerializer(members, many=True)
+            return Response(serializer.data)
+        elif self.request.method == 'POST':
+            serializer = JournalMemberSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+                    with transaction.atomic():
+                        serializer.save(journal=journal)
+                except IntegrityError:
+                    content = {'error': 'IntegrityError'}
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response({}, status=status.HTTP_201_CREATED)
+        elif self.request.method == 'DELETE':
+            serializer = JournalMemberSerializer(data=request.data)
+            if serializer.is_valid():
+                member = get_object_or_404(JournalMember, user__email=serializer.data['user'], journal=journal)
+                member.delete()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EntryViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST']
@@ -73,7 +123,10 @@ class EntryViewSet(BaseViewSet):
 
     def get_queryset(self):
         journal_uid = self.kwargs['journal']
-        journal = get_object_or_404(Journal, owner=self.request.user, uid=journal_uid)
+        try:
+            journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
+        except Journal.DoesNotExist:
+            raise Http404("Journal does not exist")
         return type(self).queryset.filter(journal__pk=journal.pk)
 
     def list(self, request, journal):
@@ -101,7 +154,7 @@ class EntryViewSet(BaseViewSet):
         if last_entry != last_in_db:
             return Response({}, status=status.HTTP_409_CONFLICT)
 
-        journal_object = get_object_or_404(Journal, owner=self.request.user, uid=journal)
+        journal_object = self.get_journal_queryset(Journal.objects).get(uid=journal)
 
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)

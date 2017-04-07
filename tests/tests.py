@@ -94,7 +94,7 @@ class ApiJournalTestCase(BaseTestCase):
     def test_crud_basic(self):
         """Test adding/removing/changing journals"""
         # Not saved
-        journal = models.Journal(uid=self.get_random_hash(), content=b'test')
+        journal = models.Journal(uid=self.get_random_hash(), content=b'test', owner=self.user1)
         self.client.force_authenticate(user=self.user1)
 
         # Add
@@ -512,6 +512,123 @@ class UserInfoTestCase(BaseTestCase):
 
         # Just to complete coverage
         str(info)
+
+
+class JournalMembersTestCase(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.serializer = serializers.JournalMemberSerializer
+
+    def test_basic(self):
+        """Basic tests for JournalMembers"""
+        journal1 = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'user1')
+        journal1.save()
+        journal2 = models.Journal(owner=self.user2, uid=self.get_random_hash(), content=b'user2')
+        journal2.save()
+
+        # List
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        # Give user1 access to user2's journal2
+        journal_member = models.JournalMember(user=self.user1, key=b'somekey')
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                    self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # List
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        # Journals return different owners
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        owners = {}
+        for journal in response.data:
+            owners[journal['owner']] = journal
+        self.assertIn(self.user1.email, owners)
+        self.assertIn(self.user2.email, owners)
+
+        # Check key is set as expected
+        self.assertIs(owners[self.user1.email]['key'], None)
+        self.assertIsNot(owners[self.user2.email]['key'], None)
+
+        # Get the members of own journal vs someone else's
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-members', kwargs={'uid': journal2.uid}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('journal-members', kwargs={'uid': journal2.uid}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['user'], self.user1.email)
+
+        # Try to edit a journal when not owner but have access
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.put(reverse('journal-detail', kwargs={'uid': journal2.uid}),
+                                   serializers.JournalSerializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Trying to give a user with access access again
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                    self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Patch is not allowed
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.patch(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                     self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        # Revoking access
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.delete(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                      self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Revoking when there's nothingto revoke
+        response = self.client.delete(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                      self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Making sure access was really revoked but journal still exists
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        # Invalid json request
+        journal_member = models.JournalMember(user=self.user1, key=b'somekey')
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+                                    {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Just to complete coverage
+        str(journal_member)
 
 
 class DebugOnlyTestCase(BaseTestCase):
