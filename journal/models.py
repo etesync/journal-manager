@@ -26,7 +26,7 @@ class Entry(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=64, validators=[Sha256Validator])
     content = models.BinaryField(editable=True, blank=False, null=False)
-    journal = models.ForeignKey(Journal)
+    journal = models.ForeignKey(Journal, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('uid', 'journal')
