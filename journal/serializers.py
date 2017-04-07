@@ -18,7 +18,7 @@ class BinaryBase64Field(serializers.Field):
 class JournalSerializer(serializers.ModelSerializer):
     content = BinaryBase64Field()
     owner = serializers.SlugRelatedField(
-        slug_field='email',
+        slug_field=User.USERNAME_FIELD,
         read_only=True
     )
     key = serializers.SerializerMethodField('get_key_from_context')
@@ -67,7 +67,7 @@ class UserInfoPublicSerializer(UserInfoSerializer):
 
 class JournalMemberSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
-        slug_field='email',
+        slug_field=User.USERNAME_FIELD,
         queryset=User.objects
     )
     key = BinaryBase64Field()

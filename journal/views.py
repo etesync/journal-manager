@@ -108,7 +108,8 @@ class JournalViewSet(BaseViewSet):
         elif self.request.method == 'DELETE':
             serializer = JournalMemberSerializer(data=request.data)
             if serializer.is_valid():
-                member = get_object_or_404(JournalMember, user__email=serializer.data['user'], journal=journal)
+                filter_dict = {'user__' + User.USERNAME_FIELD: serializer.data['user']}
+                member = get_object_or_404(JournalMember, **filter_dict, journal=journal)
                 member.delete()
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -189,11 +190,12 @@ class UserInfoViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
     queryset = UserInfo.objects.all()
     serializer_class = UserInfoSerializer
-    lookup_field = 'owner__email'
+    lookup_field = 'owner__' + User.USERNAME_FIELD
+    lookup_url_kwarg = 'username'
 
     def get_serializer_class(self):
         # Owners get to see more
-        if self.kwargs[self.lookup_field] == self.request.user.email:
+        if self.kwargs[self.lookup_url_kwarg] == getattr(self.request.user, User.USERNAME_FIELD):
             serializer_class = super().get_serializer_class()
         else:
             serializer_class = UserInfoPublicSerializer

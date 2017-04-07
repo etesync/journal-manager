@@ -468,13 +468,13 @@ class UserInfoTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Check we get back what we put
-        response = self.client.get(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        response = self.client.get(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictEqual(response.data, self.serializer(info).data)
 
         # When getting other people's info we get the same minus content
         self.client.force_authenticate(user=self.user2)
-        response = self.client.get(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        response = self.client.get(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected = self.serializer(info).data
         del expected['content']
@@ -482,14 +482,14 @@ class UserInfoTestCase(BaseTestCase):
 
         # Check delete works only once and only on ours
         self.client.force_authenticate(user=self.user2)
-        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.client.force_authenticate(user=self.user1)
-        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Try to get all users
@@ -500,7 +500,7 @@ class UserInfoTestCase(BaseTestCase):
 
         # Malformed request
         response = self.client.post(reverse('userinfo-list'),
-                                    {'owner': self.user1.email})
+                                    {'owner': self.user1.username})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Create one after it was deleted
@@ -562,12 +562,12 @@ class JournalMembersTestCase(BaseTestCase):
         owners = {}
         for journal in response.data:
             owners[journal['owner']] = journal
-        self.assertIn(self.user1.email, owners)
-        self.assertIn(self.user2.email, owners)
+        self.assertIn(self.user1.username, owners)
+        self.assertIn(self.user2.username, owners)
 
         # Check key is set as expected
-        self.assertIs(owners[self.user1.email]['key'], None)
-        self.assertIsNot(owners[self.user2.email]['key'], None)
+        self.assertIs(owners[self.user1.username]['key'], None)
+        self.assertIsNot(owners[self.user2.username]['key'], None)
 
         # Get the members of own journal vs someone else's
         self.client.force_authenticate(user=self.user1)
@@ -578,7 +578,7 @@ class JournalMembersTestCase(BaseTestCase):
         response = self.client.get(reverse('journal-members', kwargs={'uid': journal2.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['user'], self.user1.email)
+        self.assertEqual(response.data[0]['user'], self.user1.username)
 
         # Try to edit a journal when not owner but have access
         self.client.force_authenticate(user=self.user1)
