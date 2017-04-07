@@ -18,7 +18,7 @@ from .serializers import EntrySerializer, JournalSerializer, JournalUpdateSerial
 
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    permission_classes = app_settings.API_PERMISSIONS
+    permission_classes = tuple(app_settings.API_PERMISSIONS)
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
