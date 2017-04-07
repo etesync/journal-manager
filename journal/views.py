@@ -202,7 +202,7 @@ class UserInfoViewSet(BaseViewSet):
 
     def get_queryset(self):
         queryset = type(self).queryset
-        return queryset.filter(deleted=False)
+        return queryset
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)

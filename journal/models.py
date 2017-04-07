@@ -53,7 +53,6 @@ class UserInfo(models.Model):
     version = models.PositiveSmallIntegerField(default=1)
     pubkey = models.BinaryField(editable=True, blank=False, null=False)
     content = models.BinaryField(editable=True, blank=False, null=False)
-    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return "UserInfo<{}>".format(self.owner)
