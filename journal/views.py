@@ -134,9 +134,13 @@ def reset(request):
     if not settings.DEBUG:
         return HttpResponseBadRequest("Only allowed in debug mode.")
 
-    user, token = TokenAuthentication().authenticate(request)
+    if not request.user.is_authenticated():
+        ret = TokenAuthentication().authenticate(request)
 
-    login(request, user)
+        if ret is None:
+            return HttpResponseBadRequest("Couldn't authenticate")
+
+        login(request, ret[0])
 
     # Hardcoded user, for extra safety
     if request.user.email != 'test@localhost':

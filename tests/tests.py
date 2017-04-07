@@ -3,6 +3,7 @@ import hashlib
 
 from django.test import TestCase
 from django.test import Client
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
@@ -454,3 +455,22 @@ class DebugOnlyTestCase(BaseTestCase):
         response = self.raw_client.post(reverse('reset_debug'), {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.content, b'Only allowed in debug mode.')
+
+    @override_settings(DEBUG=True)
+    def test_reset(self):
+        """Specifically verify that this endpoint behaves correctly when debug is set"""
+        user = User.objects.create(username='test@localhost', email='test@localhost')
+
+        # No user
+        response = self.raw_client.post(reverse('reset_debug'), {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Disallowed user
+        self.raw_client.force_login(user=self.user1)
+        response = self.raw_client.post(reverse('reset_debug'), {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Allowed user
+        self.raw_client.force_login(user=user)
+        response = self.raw_client.post(reverse('reset_debug'), {})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
