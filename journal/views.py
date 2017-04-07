@@ -11,9 +11,12 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
-from . import app_settings
-from .models import Entry, Journal
-from .serializers import EntrySerializer, JournalSerializer, JournalUpdateSerializer
+from . import app_settings, permissions
+from .models import Entry, Journal, UserInfo
+from .serializers import (
+        EntrySerializer, JournalSerializer, JournalUpdateSerializer,
+        UserInfoSerializer, UserInfoPublicSerializer
+    )
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -124,6 +127,46 @@ class EntryViewSet(BaseViewSet):
 
     def partial_update(self, request, journal, uid=None):
         self.get_object()
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+class UserInfoViewSet(BaseViewSet):
+    lookup_value_regex = '[^/]+'
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsOwnerOrReadOnly, )
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
+    queryset = UserInfo.objects.all()
+    serializer_class = UserInfoSerializer
+    lookup_field = 'owner__email'
+
+    def get_serializer_class(self):
+        # Owners get to see more
+        if self.kwargs[self.lookup_field] == self.request.user.email:
+            serializer_class = super().get_serializer_class()
+        else:
+            serializer_class = UserInfoPublicSerializer
+
+        return serializer_class
+
+    def get_queryset(self):
+        queryset = type(self).queryset
+        return queryset.filter(deleted=False)
+
+    def create(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    serializer.save(owner=self.request.user)
+            except IntegrityError:
+                content = {'error': 'IntegrityError'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # List is not allowed
+    def list(self, request):
         return Response(status=status.HTTP_403_FORBIDDEN)
 
 

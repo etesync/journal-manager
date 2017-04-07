@@ -31,3 +31,17 @@ class EntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Entry
         fields = ('uid', 'content')
+
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    content = BinaryBase64Field()
+    pubkey = BinaryBase64Field()
+
+    class Meta:
+        model = models.UserInfo
+        fields = ('version', 'pubkey', 'content')
+
+
+class UserInfoPublicSerializer(UserInfoSerializer):
+    class Meta(JournalSerializer.Meta):
+        fields = ('version', 'pubkey')

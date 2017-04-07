@@ -34,3 +34,14 @@ class Entry(models.Model):
 
     def __str__(self):
         return "Entry<{}>".format(self.uid)
+
+
+class UserInfo(models.Model):
+    owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    version = models.PositiveSmallIntegerField(default=1)
+    pubkey = models.BinaryField(editable=True, blank=False, null=False)
+    content = models.BinaryField(editable=True, blank=False, null=False)
+    deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "UserInfo<{}>".format(self.owner)

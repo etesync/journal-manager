@@ -446,6 +446,74 @@ class ApiEntryTestCase(BaseTestCase):
         str(models.Entry(uid=self.get_random_hash(), content=b'1'))
 
 
+class UserInfoTestCase(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.serializer = serializers.UserInfoSerializer
+
+    def test_basic(self):
+        """Basic tests for UserInfo"""
+
+        # Create one for user1
+        self.client.force_authenticate(user=self.user1)
+        info = models.UserInfo(owner=self.user1, pubkey=b'pubkey', content=b'content')
+        response = self.client.post(reverse('userinfo-list'),
+                                    self.serializer(info).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Only allowed to create once
+        info = models.UserInfo(owner=self.user1, pubkey=b'pubkey', content=b'content')
+        response = self.client.post(reverse('userinfo-list'),
+                                    self.serializer(info).data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Check we get back what we put
+        response = self.client.get(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertDictEqual(response.data, self.serializer(info).data)
+
+        # When getting other people's info we get the same minus content
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = self.serializer(info).data
+        del expected['content']
+        self.assertDictEqual(response.data, expected)
+
+        # Check delete works only once and only on ours
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.delete(reverse('userinfo-detail', kwargs={'owner__email': self.user1.email}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Try to get all users
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('userinfo-list'),
+                                   self.serializer(info).data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Malformed request
+        response = self.client.post(reverse('userinfo-list'),
+                                    {'owner': self.user1.email})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Create one after it was deleted
+        self.client.force_authenticate(user=self.user1)
+        info = models.UserInfo(owner=self.user1, pubkey=b'pubkey', content=b'content')
+        response = self.client.post(reverse('userinfo-list'),
+                                    self.serializer(info).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Just to complete coverage
+        str(info)
+
+
 class DebugOnlyTestCase(BaseTestCase):
     def test_only_debug(self):
         """This endpoint should only be allowed in debug mode"""
