@@ -18,8 +18,8 @@ User = get_user_model()
 
 class BaseTestCase(TestCase):
     def setUp(self):
-        self.user1 = User.objects.create(username='user1')
-        self.user2 = User.objects.create(username='user2')
+        self.user1 = User.objects.create(username='user1', email='user1@localhost')
+        self.user2 = User.objects.create(username='user2', email='user2@localhost')
         self.client = APIClient()
         self.raw_client = Client()
         self.random_hash_seed = 1
