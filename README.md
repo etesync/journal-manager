@@ -2,8 +2,6 @@ This is a reusable django app that implements the server side of EteSync
 
 More info on the [EteSync website](https://www.etesync.com)
 
-**This app is WIP and API can should be considered unstable, though it should be considered stable and usable.**
-
 # Quick start
 
 1. Add "journal" to your INSTALLED_APPS setting like this::
