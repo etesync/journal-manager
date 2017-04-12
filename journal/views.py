@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import login, get_user_model
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -246,5 +247,10 @@ def reset(request):
 
     # Delete all of the journal data for this user for a clear test env
     request.user.journal_set.all().delete()
+    request.user.journalmember_set.all().delete()
+    try:
+        request.user.userinfo.delete()
+    except ObjectDoesNotExist:
+        pass
 
     return HttpResponse()
