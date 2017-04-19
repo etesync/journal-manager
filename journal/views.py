@@ -70,7 +70,7 @@ class JournalViewSet(BaseViewSet):
                 with transaction.atomic():
                     serializer.save(owner=self.request.user)
             except IntegrityError:
-                content = {'error': 'IntegrityError'}
+                content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({}, status=status.HTTP_201_CREATED)
@@ -102,7 +102,7 @@ class JournalViewSet(BaseViewSet):
                     with transaction.atomic():
                         serializer.save(journal=journal)
                 except IntegrityError:
-                    content = {'error': 'IntegrityError'}
+                    content = {'code': 'integrity_error'}
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response({}, status=status.HTTP_201_CREATED)
@@ -165,7 +165,7 @@ class EntryViewSet(BaseViewSet):
                 with transaction.atomic():
                     serializer.save(journal=journal_object)
             except IntegrityError:
-                content = {'error': 'IntegrityError'}
+                content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({}, status=status.HTTP_201_CREATED)
@@ -214,7 +214,7 @@ class UserInfoViewSet(BaseViewSet):
                 with transaction.atomic():
                     serializer.save(owner=self.request.user)
             except IntegrityError:
-                content = {'error': 'IntegrityError'}
+                content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({}, status=status.HTTP_201_CREATED)
