@@ -102,7 +102,7 @@ class JournalViewSet(BaseViewSet):
                     with transaction.atomic():
                         serializer.save(journal=journal)
                 except IntegrityError:
-                    content = {'code': 'integrity_error'}
+                    content = {'code': 'already_exists', 'detail': 'Member arleady exists'}
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response({}, status=status.HTTP_201_CREATED)
