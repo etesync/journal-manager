@@ -87,6 +87,7 @@ class JournalViewSet(BaseViewSet):
 class MembersViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'DELETE']
     permission_classes = BaseViewSet.permission_classes + (permissions.IsJournalOwner, )
+    lookup_value_regex = '[^/]+'
     queryset = JournalMember.objects.all()
     serializer_class = JournalMemberSerializer
     lookup_field = 'user__' + User.USERNAME_FIELD
