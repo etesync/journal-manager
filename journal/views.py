@@ -38,7 +38,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         return serializer_class
 
-    def get_journal_queryset(self, queryset):
+    def get_journal_queryset(self, queryset=Journal.objects):
         user = self.request.user
         return queryset.filter(Q(owner=user) | Q(members__user=user),
                                deleted=False)
@@ -83,38 +83,42 @@ class JournalViewSet(BaseViewSet):
         serializer = self.serializer_class(queryset, context={'request': request}, many=True)
         return Response(serializer.data)
 
-    # FIXME: Change into a nested resource
-    @detail_route(methods=('GET', 'POST', 'DELETE'))
-    def members(self, request, uid=None):
-        journal = self.get_object()
-        if journal.owner != self.request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
 
-        if self.request.method == 'GET':
-            members = JournalMember.objects.filter(journal=journal)
+class MembersViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'POST', 'DELETE']
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsJournalOwner, )
+    queryset = JournalMember.objects.all()
+    serializer_class = JournalMemberSerializer
+    lookup_field = 'user__' + User.USERNAME_FIELD
+    lookup_url_kwarg = 'username'
 
-            serializer = JournalMemberSerializer(members, many=True)
-            return Response(serializer.data)
-        elif self.request.method == 'POST':
-            serializer = JournalMemberSerializer(data=request.data)
-            if serializer.is_valid():
-                try:
-                    with transaction.atomic():
-                        serializer.save(journal=journal)
-                except IntegrityError:
-                    content = {'code': 'already_exists', 'detail': 'Member arleady exists'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        journal_uid = self.kwargs['journal_uid']
+        return type(self).queryset.filter(journal__uid=journal_uid)
 
-                return Response({}, status=status.HTTP_201_CREATED)
-        elif self.request.method == 'DELETE':
-            serializer = JournalMemberSerializer(data=request.data)
-            if serializer.is_valid():
-                filter_dict = {'user__' + User.USERNAME_FIELD: serializer.data['user']}
-                member = get_object_or_404(JournalMember, **filter_dict, journal=journal)
-                member.delete()
+    def create(self, request, journal_uid=None):
+        serializer = self.serializer_class(data=request.data)
+        journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    serializer.save(journal=journal)
+            except IntegrityError:
+                content = {'code': 'already_exists', 'detail': 'Member arleady exists'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({}, status=status.HTTP_201_CREATED)
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request, journal_uid=None):
+        journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
+        members = JournalMember.objects.filter(journal=journal)
+
+        serializer = JournalMemberSerializer(members, many=True)
+        return Response(serializer.data)
+
+    def update(self, request, partial, username=None, journal_uid=None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class EntryViewSet(BaseViewSet):

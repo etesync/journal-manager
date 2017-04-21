@@ -540,7 +540,7 @@ class JournalMembersTestCase(BaseTestCase):
         # Give user1 access to user2's journal2
         journal_member = models.JournalMember(user=self.user1, key=b'somekey')
         self.client.force_authenticate(user=self.user2)
-        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}),
                                     self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -571,11 +571,11 @@ class JournalMembersTestCase(BaseTestCase):
 
         # Get the members of own journal vs someone else's
         self.client.force_authenticate(user=self.user1)
-        response = self.client.get(reverse('journal-members', kwargs={'uid': journal2.uid}))
+        response = self.client.get(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.client.force_authenticate(user=self.user2)
-        response = self.client.get(reverse('journal-members', kwargs={'uid': journal2.uid}))
+        response = self.client.get(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['user'], self.user1.username)
@@ -587,25 +587,26 @@ class JournalMembersTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Trying to give a user with access access again
+        journal_member_user = getattr(journal_member.user, User.USERNAME_FIELD)
         self.client.force_authenticate(user=self.user2)
-        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}),
                                     self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Patch is not allowed
         self.client.force_authenticate(user=self.user2)
-        response = self.client.patch(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.patch(reverse('journal-members-detail', kwargs={'journal_uid': journal2.uid, 'username': journal_member_user}),
                                      self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         # Revoking access
         self.client.force_authenticate(user=self.user2)
-        response = self.client.delete(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.delete(reverse('journal-members-detail', kwargs={'journal_uid': journal2.uid, 'username': journal_member_user}),
                                       self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Revoking when there's nothingto revoke
-        response = self.client.delete(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.delete(reverse('journal-members-detail', kwargs={'journal_uid': journal2.uid, 'username': journal_member_user}),
                                       self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -623,7 +624,7 @@ class JournalMembersTestCase(BaseTestCase):
         # Invalid json request
         journal_member = models.JournalMember(user=self.user1, key=b'somekey')
         self.client.force_authenticate(user=self.user2)
-        response = self.client.post(reverse('journal-members', kwargs={'uid': journal2.uid}),
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}),
                                     {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
