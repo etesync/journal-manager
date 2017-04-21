@@ -225,13 +225,15 @@ class ApiJournalTestCase(BaseTestCase):
         str(models.Journal(uid=self.get_random_hash(), content=b'1'))
 
 
-class ApiEntryTestCase(BaseTestCase):
+class ApiOldEntryTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.serializer = serializers.EntrySerializer
 
         self.journal = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'test')
         self.journal.save()
+        self.LIST = 'entry-list'
+        self.DETAIL = 'entry-detail'
 
     def test_only_owner(self):
         """Check all the endpoints correctly require authentication"""
@@ -240,47 +242,47 @@ class ApiEntryTestCase(BaseTestCase):
 
         # List
         self.client.force_authenticate(user=self.user1)
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
         self.client.force_authenticate(user=self.user2)
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Get
         self.client.force_authenticate(user=self.user1)
-        response = self.client.get(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.client.force_authenticate(user=self.user2)
-        response = self.client.get(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Update
         self.client.force_authenticate(user=self.user1)
-        response = self.client.put(reverse('entry-detail', kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.client.force_authenticate(user=self.user2)
-        response = self.client.put(reverse('entry-detail', kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Add to a different user's journal
         entry.uid = self.get_random_hash()
         self.client.force_authenticate(user=self.user1)
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         entry.uid = self.get_random_hash()
         self.client.force_authenticate(user=self.user2)
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         ## Try to update an entry a user doesn't own
         entry.uid = self.get_random_hash()
         self.client.force_authenticate(user=self.user2)
-        response = self.client.put(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_crud_basic(self):
@@ -290,48 +292,48 @@ class ApiEntryTestCase(BaseTestCase):
         self.client.force_authenticate(user=self.user1)
 
         # Add
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Add multiple
         multi = [models.Entry(uid=self.get_random_hash(), content=b'test'), models.Entry(uid=self.get_random_hash(), content=b'test'), models.Entry(uid=self.get_random_hash(), content=b'test')]
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         ## Verify we got as many we expected
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 4)
 
         # Get
-        response = self.client.get(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictEqual(response.data, self.serializer(entry).data)
 
         # Update
-        response = self.client.put(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Partial update
-        response = self.client.patch(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.patch(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # List
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictEqual(response.data[0], self.serializer(entry).data)
 
         # Destroy
         ## This actually destroys the object, so has to be last.
-        response = self.client.delete(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
+        response = self.client.delete(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         ## Verify deletion failed (both in api an db)
-        response = self.client.get(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         entry = models.Entry.objects.get(uid=entry.uid)
 
         # Put directly (without it existing)
         entry.uid = self.get_random_hash()
-        response = self.client.post(reverse('entry-detail', kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.DETAIL, kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_errors_basic(self):
@@ -341,36 +343,36 @@ class ApiEntryTestCase(BaseTestCase):
         self.client.force_authenticate(user=self.user1)
 
         # Put bad/empty uid
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         entry.uid = "12"
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Put none/empty content
         entry.content = b''
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         # FIXME self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         entry.content = None
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         # FIXME self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Put existing uid
         entry.uid = self.get_random_hash()
         entry.content = b'test'
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Add multiple with one existing. No update to nothing.
         multi = [models.Entry(uid=self.get_random_hash(), content=b'test'), entry, models.Entry(uid=self.get_random_hash(), content=b'test')]
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), json.dumps(self.serializer(multi, many=True).data), content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         ## Verify we got as many we expected (none)
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
@@ -384,7 +386,7 @@ class ApiEntryTestCase(BaseTestCase):
 
         # Not allowed to change UID
         entry2 = models.Entry(journal=self.journal, uid=self.get_random_hash(), content=b'test')
-        response = self.client.put(reverse('entry-detail', kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry2).data)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}), self.serializer(entry2).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(entry, models.Entry.objects.get(uid=entry.uid))
 
@@ -400,50 +402,58 @@ class ApiEntryTestCase(BaseTestCase):
         self.client.force_authenticate(user=self.user1)
 
         # List
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
 
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         ## Also verify it's really the one we expect to be last
         self.assertEqual(response.data[0]['uid'], entry.uid)
 
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(response.data[0]['uid']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
         # Non-existent last
-        response = self.client.get(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(self.get_random_hash()))
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(self.get_random_hash()))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Add
         ## With correct last
         entry = models.Entry(journal=self.journal, uid=self.get_random_hash(), content=b'3')
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         ## With incorrect last
         entry = models.Entry(journal=self.journal, uid=self.get_random_hash(), content=b'3')
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(entry2.uid), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(entry2.uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
         ## With non-existing last
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(self.get_random_hash()), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(self.get_random_hash()), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         ## Missing a last
-        response = self.client.post(reverse('entry-list', kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_filler(self):
         """Extra calls to cheat coverage (things we don't really care about)"""
         str(models.Entry(uid=self.get_random_hash(), content=b'1'))
+
+
+class ApiEntryTestCase(ApiOldEntryTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.LIST = 'journal-entries-list'
+        self.DETAIL = 'journal-entries-detail'
 
 
 class UserInfoTestCase(BaseTestCase):

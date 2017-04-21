@@ -11,6 +11,7 @@ router.register(r'user', views.UserInfoViewSet)
 
 journals_router = routers.NestedSimpleRouter(router, r'journals', lookup='journal')
 journals_router.register(r'members', views.MembersViewSet, base_name='journal-members')
+journals_router.register(r'entries', views.EntryViewSet, base_name='journal-entries')
 
 
 urlpatterns = [
