@@ -129,14 +129,14 @@ class EntryViewSet(BaseViewSet):
     lookup_field = 'uid'
 
     def get_queryset(self):
-        journal_uid = self.kwargs['journal']
+        journal_uid = self.kwargs['journal_uid']
         try:
             journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
         except Journal.DoesNotExist:
             raise Http404("Journal does not exist")
         return type(self).queryset.filter(journal__pk=journal.pk)
 
-    def list(self, request, journal):
+    def list(self, request, journal_uid=None):
         last = request.query_params.get('last', None)
         if last is not None:
             queryset = self.get_queryset()
@@ -149,7 +149,7 @@ class EntryViewSet(BaseViewSet):
 
         return super().list(self, request)
 
-    def create(self, request, journal):
+    def create(self, request, journal_uid=None):
         queryset = self.get_queryset()
         last_in_db = queryset.last()
 
@@ -161,7 +161,7 @@ class EntryViewSet(BaseViewSet):
         if last_entry != last_in_db:
             return Response({}, status=status.HTTP_409_CONFLICT)
 
-        journal_object = self.get_journal_queryset(Journal.objects).get(uid=journal)
+        journal_object = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
 
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
@@ -177,15 +177,15 @@ class EntryViewSet(BaseViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, journal, uid=None):
+    def destroy(self, request, journal_uid=None, uid=None):
         # FIXME: This shouldn't be needed. Doesn't work without for some reason.
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def update(self, request, journal, uid=None):
+    def update(self, request, journal_uid=None, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)
 
-    def partial_update(self, request, journal, uid=None):
+    def partial_update(self, request, journal_uid=None, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)
 

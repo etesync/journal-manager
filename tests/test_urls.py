@@ -6,7 +6,7 @@ from journal import views
 
 router = routers.DefaultRouter()
 router.register(r'journals', views.JournalViewSet)
-router.register(r'journal/(?P<journal>[^/]+)', views.EntryViewSet)
+router.register(r'journal/(?P<journal_uid>[^/]+)', views.EntryViewSet)
 router.register(r'user', views.UserInfoViewSet)
 
 domains_router = routers.NestedSimpleRouter(router, r'journals', lookup='journal')
