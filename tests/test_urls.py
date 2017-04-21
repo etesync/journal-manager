@@ -9,13 +9,13 @@ router.register(r'journals', views.JournalViewSet)
 router.register(r'journal/(?P<journal_uid>[^/]+)', views.EntryViewSet)
 router.register(r'user', views.UserInfoViewSet)
 
-domains_router = routers.NestedSimpleRouter(router, r'journals', lookup='journal')
-domains_router.register(r'members', views.MembersViewSet, base_name='journal-members')
+journals_router = routers.NestedSimpleRouter(router, r'journals', lookup='journal')
+journals_router.register(r'members', views.MembersViewSet, base_name='journal-members')
 
 
 urlpatterns = [
     url(r'^api/v1/', include(router.urls)),
-    url(r'^api/v1/', include(domains_router.urls)),
+    url(r'^api/v1/', include(journals_router.urls)),
 ]
 
 # Adding this just for testing, this shouldn't be here normally
