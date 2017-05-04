@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.3.1
+* Journal members: disallow adding oneself as a journal member.
+
 ## Version 0.3.0
 * Journal: save the time when the journal was last modified.
 * Added API to share journals between users
