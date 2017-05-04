@@ -547,6 +547,13 @@ class JournalMembersTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+        # Fail to give access to oneself
+        journal_member = models.JournalMember(user=self.user2, key=b'somekey')
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}),
+                                    self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
         # Give user1 access to user2's journal2
         journal_member = models.JournalMember(user=self.user1, key=b'somekey')
         self.client.force_authenticate(user=self.user2)

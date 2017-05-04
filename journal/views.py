@@ -101,6 +101,8 @@ class MembersViewSet(BaseViewSet):
         serializer = self.serializer_class(data=request.data)
         journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
         if serializer.is_valid():
+            if journal.owner == serializer.validated_data.get('user'):
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             try:
                 with transaction.atomic():
                     serializer.save(journal=journal)
