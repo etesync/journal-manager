@@ -13,7 +13,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
-from . import app_settings, permissions
+from . import app_settings, permissions, paginators
 from .models import Entry, Journal, UserInfo, JournalMember
 from .serializers import (
         EntrySerializer, JournalSerializer, JournalUpdateSerializer,
@@ -127,6 +127,7 @@ class EntryViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST']
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
+    pagination_class = paginators.LinkHeaderPagination
     lookup_field = 'uid'
 
     def get_queryset(self):
