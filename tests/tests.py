@@ -308,6 +308,11 @@ class ApiOldEntryTestCase(BaseTestCase):
         response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid})+ '?limit={}'.format(limit))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), limit)
+        ## Verify limit works with last
+        limit = 1
+        response = self.client.get(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid})+ '?last={}&limit={}'.format(models.Entry.objects.first().uid, limit))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), limit)
 
         # Get
         response = self.client.get(reverse(self.DETAIL, kwargs={'uid': entry.uid, 'journal_uid': self.journal.uid}))

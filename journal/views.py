@@ -131,29 +131,23 @@ class EntryViewSet(BaseViewSet):
     pagination_class = paginators.LinkHeaderPagination
     lookup_field = 'uid'
 
-    def get_queryset(self):
+    def get_queryset(self, use_last=True):
         journal_uid = self.kwargs['journal_uid']
         try:
             journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
         except Journal.DoesNotExist:
             raise Http404("Journal does not exist")
-        return type(self).queryset.filter(journal__pk=journal.pk)
+        queryset = type(self).queryset.filter(journal__pk=journal.pk)
 
-    def list(self, request, journal_uid=None):
-        last = request.query_params.get('last', None)
-        if last is not None:
-            queryset = self.get_queryset()
-
+        last = self.request.query_params.get('last', None)
+        if use_last and last is not None:
             last_entry = get_object_or_404(queryset, uid=last)
             queryset = queryset.filter(id__gt=last_entry.id)
 
-            serializer = self.serializer_class(queryset, many=True)
-            return Response(serializer.data)
-
-        return super().list(self, request)
+        return queryset
 
     def create(self, request, journal_uid=None):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset(use_last=False)
         last_in_db = queryset.last()
 
         last = request.query_params.get('last', None)
