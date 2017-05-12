@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.4.1
+* Entries: fixing pagination when using the last query parameter.
+
 ## Version 0.4.0
 * Entries: add suppport for pagination - limiting the number of entries returned by a query parameter.
 * Members: add a proper error message when trying to add oneself as a journal member.
