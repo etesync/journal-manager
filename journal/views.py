@@ -12,7 +12,6 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework.decorators import detail_route
 
 from . import app_settings, permissions
 from .models import Entry, Journal, UserInfo, JournalMember
