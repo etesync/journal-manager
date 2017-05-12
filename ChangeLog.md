@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.4.0
+* Entries: add suppport for pagination - limiting the number of entries returned by a query parameter.
+* Members: add a proper error message when trying to add oneself as a journal member.
+
 ## Version 0.3.1
 * Journal members: disallow adding oneself as a journal member.
 
