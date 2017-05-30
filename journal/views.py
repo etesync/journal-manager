@@ -243,8 +243,8 @@ def reset(request):
 
         login(request, ret[0])
 
-    # Hardcoded user, for extra safety
-    if request.user.email != 'test@localhost':
+    # Only allow local users, for extra safety
+    if not request.user.email.endswith('@localhost'):
         return HttpResponseBadRequest("Endpoint not allowed for user.")
 
     # Delete all of the journal data for this user for a clear test env
