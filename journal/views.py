@@ -235,7 +235,7 @@ def reset(request):
     if not settings.DEBUG:
         return HttpResponseBadRequest("Only allowed in debug mode.")
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         ret = TokenAuthentication().authenticate(request)
 
         if ret is None:
