@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.0
+* Add Django 2 support
+
 ## Version 0.4.1
 * Entries: fixing pagination when using the last query parameter.
 
