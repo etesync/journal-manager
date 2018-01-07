@@ -220,7 +220,7 @@ class UserInfoViewSet(BaseViewSet):
                 with transaction.atomic():
                     serializer.save(owner=self.request.user)
             except IntegrityError:
-                content = {'code': 'integrity_error'}
+                content = {'code': 'integrity_error', 'detail': 'Error creating user info.'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({}, status=status.HTTP_201_CREATED)
