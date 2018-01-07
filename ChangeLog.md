@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.5.1
+* Fix user info fetching to be case insensitive.
+* Improve user info creation failure error message.
+
 ## Version 0.5.0
 * Add Django 2 support
 
