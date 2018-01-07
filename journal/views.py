@@ -198,16 +198,20 @@ class UserInfoViewSet(BaseViewSet):
 
     def get_serializer_class(self):
         # Owners get to see more
-        if self.kwargs[self.lookup_url_kwarg] == getattr(self.request.user, User.USERNAME_FIELD):
+        if self.kwargs[self.lookup_url_kwarg].lower() == getattr(self.request.user, User.USERNAME_FIELD).lower():
             serializer_class = super().get_serializer_class()
         else:
             serializer_class = UserInfoPublicSerializer
 
         return serializer_class
 
-    def get_queryset(self):
-        queryset = type(self).queryset
-        return queryset
+    def get_object(self):
+        username = self.kwargs[self.lookup_url_kwarg]
+        queryset = self.get_queryset()
+        params = {self.lookup_field + '__iexact': username}
+        obj = get_object_or_404(queryset, **params)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
