@@ -487,8 +487,21 @@ class UserInfoTestCase(BaseTestCase):
                                     self.serializer(info).data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        # Only allowed to create once (event with wrong casing)
+        info = models.UserInfo(owner=User(username=self.user1.username.upper(), email=self.user1.email.upper()),
+                               pubkey=b'pubkey', content=b'content')
+        response = self.client.post(reverse('userinfo-list'),
+                                    self.serializer(info).data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
         # Check we get back what we put
+        info = models.UserInfo(owner=self.user1, pubkey=b'pubkey', content=b'content')
         response = self.client.get(reverse('userinfo-detail', kwargs={'username': self.user1.username}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertDictEqual(response.data, self.serializer(info).data)
+
+        # Check we got it even if we use the wrong casing
+        response = self.client.get(reverse('userinfo-detail', kwargs={'username': self.user1.username.upper()}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictEqual(response.data, self.serializer(info).data)
 
