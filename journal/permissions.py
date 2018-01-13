@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from journal.models import Journal
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -20,5 +21,8 @@ class IsJournalOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         journal_uid = view.kwargs['journal_uid']
-        journal = view.get_journal_queryset().get(uid=journal_uid)
-        return journal.owner == request.user
+        try:
+            journal = view.get_journal_queryset().get(uid=journal_uid)
+            return journal.owner == request.user
+        except Journal.DoesNotExist:
+            return False
