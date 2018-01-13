@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.2
+* Fix server error when trying to access members of non-existent journals.
+
 ## Version 0.5.1
 * Fix user info fetching to be case insensitive.
 * Improve user info creation failure error message.
