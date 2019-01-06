@@ -343,8 +343,8 @@ class ApiOldEntryTestCase(BaseTestCase):
 
         # Put directly (without it existing)
         entry.uid = self.get_random_hash()
-        response = self.client.post(reverse(self.DETAIL, kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        response = self.client.put(reverse(self.DETAIL, kwargs={'journal_uid': self.journal.uid, 'uid': entry.uid}), self.serializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_errors_basic(self):
         """Test basic validation errors"""
