@@ -14,10 +14,10 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from . import app_settings, permissions, paginators
-from .models import Entry, Journal, UserInfo, JournalMember
+from .models import Attachment, Entry, Journal, UserInfo, JournalMember
 from .serializers import (
         EntrySerializer, JournalSerializer, JournalUpdateSerializer,
-        UserInfoSerializer, UserInfoPublicSerializer,
+        UserInfoSerializer, UserInfoPublicSerializer, AttachmentSerializer,
         JournalMemberSerializer
     )
 
@@ -185,6 +185,41 @@ class EntryViewSet(BaseViewSet):
     def partial_update(self, request, journal_uid=None, uid=None):
         self.get_object()
         return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+class AttachmentViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
+    queryset = Attachment.objects.all()
+    serializer_class = AttachmentSerializer
+    pagination_class = paginators.LinkHeaderPagination
+    lookup_field = 'uid'
+
+    def get_queryset(self, use_last=True):
+        journal_uid = self.kwargs['journal_uid']
+        try:
+            journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
+        except Journal.DoesNotExist:
+            raise Http404("Journal does not exist")
+        queryset = type(self).queryset.filter(journal__pk=journal.pk)
+
+        return queryset
+
+    def create(self, request, journal_uid=None):
+        journal_object = get_object_or_404(self.get_journal_queryset(Journal.objects), uid=journal_uid)
+
+        many = isinstance(request.data, list)
+        serializer = self.serializer_class(data=request.data, many=many)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    serializer.save(journal=journal_object)
+            except IntegrityError:
+                content = {'code': 'integrity_error'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserInfoViewSet(BaseViewSet):

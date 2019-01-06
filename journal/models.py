@@ -22,7 +22,7 @@ class Journal(models.Model):
         return "Journal<{}>".format(self.uid)
 
 
-class Entry(models.Model):
+class Entity(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=64, validators=[Sha256Validator])
     content = models.BinaryField(editable=True, blank=False, null=False)
@@ -30,10 +30,21 @@ class Entry(models.Model):
 
     class Meta:
         unique_together = ('uid', 'journal')
+        abstract = True
+
+
+class Entry(Entity):
+    class Meta(Entity.Meta):
         ordering = ['id']
+        abstract = False
 
     def __str__(self):
         return "Entry<{}>".format(self.uid)
+
+
+class Attachment(Entity):
+    def __str__(self):
+        return "Attachment<{}>".format(self.uid)
 
 
 class JournalMember(models.Model):

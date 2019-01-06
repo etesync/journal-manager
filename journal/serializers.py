@@ -43,12 +43,21 @@ class JournalUpdateSerializer(JournalSerializer):
         fields = ('content', )
 
 
-class EntrySerializer(serializers.ModelSerializer):
+class EntitySerializer(serializers.ModelSerializer):
     content = BinaryBase64Field()
 
     class Meta:
-        model = models.Entry
         fields = ('uid', 'content')
+
+
+class EntrySerializer(EntitySerializer):
+    class Meta(EntitySerializer.Meta):
+        model = models.Entry
+
+
+class AttachmentSerializer(EntitySerializer):
+    class Meta(EntitySerializer.Meta):
+        model = models.Attachment
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
