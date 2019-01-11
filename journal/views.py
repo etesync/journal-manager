@@ -40,7 +40,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     def get_journal_queryset(self, queryset=Journal.objects):
         user = self.request.user
         return queryset.filter(Q(owner=user) | Q(members__user=user),
-                               deleted=False)
+                               deleted=False).distinct()
 
 
 class JournalViewSet(BaseViewSet):
