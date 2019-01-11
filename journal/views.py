@@ -100,9 +100,6 @@ class MembersViewSet(BaseViewSet):
         serializer = self.serializer_class(data=request.data)
         journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
         if serializer.is_valid():
-            if journal.owner == serializer.validated_data.get('user'):
-                content = {'code': 'no_add_owner', 'detail': 'Can\'t add journal owner as a member.'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
             try:
                 with transaction.atomic():
                     serializer.save(journal=journal)
@@ -115,7 +112,7 @@ class MembersViewSet(BaseViewSet):
 
     def list(self, request, journal_uid=None):
         journal = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
-        members = JournalMember.objects.filter(journal=journal)
+        members = JournalMember.objects.filter(journal=journal).exclude(user=self.request.user)
 
         serializer = JournalMemberSerializer(members, many=True)
         return Response(serializer.data)
