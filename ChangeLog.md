@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.3
+* Fix bug with journals that are shared with multiple users.
+
 ## Version 0.5.2
 * Fix server error when trying to access members of non-existent journals.
 
