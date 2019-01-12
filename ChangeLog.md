@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.4
+* Allow journal owners to add themselves as members
+
 ## Version 0.5.3
 * Fix bug with journals that are shared with multiple users.
 
