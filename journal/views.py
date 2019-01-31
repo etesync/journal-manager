@@ -195,7 +195,8 @@ class UserInfoViewSet(BaseViewSet):
 
     def get_serializer_class(self):
         # Owners get to see more
-        if self.kwargs[self.lookup_url_kwarg].lower() == getattr(self.request.user, User.USERNAME_FIELD).lower():
+        if self.kwargs.get(self.lookup_url_kwarg, '').lower() == \
+                getattr(self.request.user, User.USERNAME_FIELD).lower():
             serializer_class = super().get_serializer_class()
         else:
             serializer_class = UserInfoPublicSerializer
