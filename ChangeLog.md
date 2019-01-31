@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.5
+* Fix crash when trying to list the forbidden endpoint for userInfo (api/v1/user)
+
 ## Version 0.5.4
 * Allow journal owners to add themselves as members
 
