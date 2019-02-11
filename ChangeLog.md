@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.6
+* Add migrations for django 2.1.
+
 ## Version 0.5.5
 * Fix crash when trying to list the forbidden endpoint for userInfo (api/v1/user)
 
