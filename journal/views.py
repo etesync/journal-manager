@@ -123,6 +123,7 @@ class MembersViewSet(BaseViewSet):
 
 class EntryViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST']
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsMemberReadOnly, )
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
     pagination_class = paginators.LinkHeaderPagination

@@ -675,6 +675,49 @@ class JournalMembersTestCase(BaseTestCase):
         # Just to complete coverage
         str(journal_member)
 
+    def test_read_only(self):
+        """Tests for read only JournalMembers"""
+        journal1 = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'user1')
+        journal1.save()
+        journal2 = models.Journal(owner=self.user2, uid=self.get_random_hash(), content=b'user2')
+        journal2.save()
+
+        # List
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.get(reverse('journal-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        # Give user1 read only access to user2's journal2
+        journal_member = models.JournalMember(user=self.user1, key=b'somekey', readOnly=True)
+        self.client.force_authenticate(user=self.user2)
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': journal2.uid}),
+                                    self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Adding an entry when have read only access
+        self.client.force_authenticate(user=self.user1)
+        entry = models.Entry(uid=self.get_random_hash(), content=b'test')
+        response = self.client.post(reverse('journal-entries-list', kwargs={'journal_uid': journal2.uid}), serializers.EntrySerializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Adding an entry when owner and there's a read only member
+        self.client.force_authenticate(user=self.user2)
+        entry = models.Entry(uid=self.get_random_hash(), content=b'test')
+        response = self.client.post(reverse('journal-entries-list', kwargs={'journal_uid': journal2.uid}), serializers.EntrySerializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Verify the entries list is actually shared with a read only user
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-entries-list', kwargs={'journal_uid': journal2.uid}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
 
 class DebugOnlyTestCase(BaseTestCase):
     def test_only_debug(self):
