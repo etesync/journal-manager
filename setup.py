@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-etesync-journal',
-    version='0.5.6',
+    version='1.0.0',
     packages=find_packages(),
     include_package_data=True,
     license='AGPLv3',
