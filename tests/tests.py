@@ -630,6 +630,12 @@ class JournalMembersTestCase(BaseTestCase):
                                    serializers.JournalSerializer(journal2).data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+        # Adding an entry when have access
+        self.client.force_authenticate(user=self.user1)
+        entry = models.Entry(uid=self.get_random_hash(), content=b'test')
+        response = self.client.post(reverse('journal-entries-list', kwargs={'journal_uid': journal2.uid}), serializers.EntrySerializer(entry).data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         # Trying to give a user with access access again
         journal_member_user = getattr(journal_member.user, User.USERNAME_FIELD)
         self.client.force_authenticate(user=self.user2)
@@ -653,6 +659,12 @@ class JournalMembersTestCase(BaseTestCase):
         self.client.force_authenticate(user=self.user1)
         response = self.client.put(reverse('journal-detail', kwargs={'uid': journal2.uid}),
                                    serializers.JournalSerializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Adding an entry when no access
+        self.client.force_authenticate(user=self.user1)
+        entry = models.Entry(uid=self.get_random_hash(), content=b'test')
+        response = self.client.post(reverse('journal-entries-list', kwargs={'journal_uid': journal2.uid}), serializers.EntrySerializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
