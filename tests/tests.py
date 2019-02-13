@@ -649,6 +649,13 @@ class JournalMembersTestCase(BaseTestCase):
                                       self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+        # Try to edit a journal when not owner and don't have access
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.put(reverse('journal-detail', kwargs={'uid': journal2.uid}),
+                                   serializers.JournalSerializer(journal2).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
         # Revoking when there's nothingto revoke
         response = self.client.delete(reverse('journal-members-detail', kwargs={'journal_uid': journal2.uid, 'username': journal_member_user}),
                                       self.serializer(journal_member).data)

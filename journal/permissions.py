@@ -25,7 +25,8 @@ class IsJournalOwner(permissions.BasePermission):
             journal = view.get_journal_queryset().get(uid=journal_uid)
             return journal.owner == request.user
         except Journal.DoesNotExist:
-            return False
+            # If the journal does not exist, we want to 404 later, not permission denied.
+            return True
 
 
 class IsMemberReadOnly(permissions.BasePermission):
