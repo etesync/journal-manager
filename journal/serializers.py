@@ -22,10 +22,11 @@ class JournalSerializer(serializers.ModelSerializer):
         read_only=True
     )
     key = serializers.SerializerMethodField('get_key_from_context')
+    readOnly = serializers.SerializerMethodField('get_read_only_from_context')
 
     class Meta:
         model = models.Journal
-        fields = ('version', 'uid', 'content', 'owner', 'key')
+        fields = ('version', 'uid', 'content', 'owner', 'key', 'readOnly')
 
     def get_key_from_context(self, obj):
         request = self.context.get('request', None)
@@ -36,6 +37,16 @@ class JournalSerializer(serializers.ModelSerializer):
                 return serialized_member.data['key']
             except models.JournalMember.DoesNotExist:
                 pass
+
+    def get_read_only_from_context(self, obj):
+        request = self.context.get('request', None)
+        if request is not None:
+            try:
+                member = obj.members.get(user=request.user)
+                return member.readOnly
+            except models.JournalMember.DoesNotExist:
+                pass
+        return False
 
 
 class JournalUpdateSerializer(JournalSerializer):
@@ -74,4 +85,4 @@ class JournalMemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.JournalMember
-        fields = ('user', 'key')
+        fields = ('user', 'key', 'readOnly')

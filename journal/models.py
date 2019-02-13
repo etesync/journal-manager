@@ -40,6 +40,7 @@ class JournalMember(models.Model):
     journal = models.ForeignKey(Journal, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     key = models.BinaryField(editable=True, blank=False, null=False)
+    readOnly = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'journal')
