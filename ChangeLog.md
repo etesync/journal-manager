@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.0.0
+* Release version 1.0 \o/
+* Add support for read only journal membership
+* Journal entries: 404 when a user has no access, don't 403 - as the user shouldn't know it even exists.
+* Improve testing
+
 ## Version 0.5.6
 * Add migrations for django 2.1.
 
