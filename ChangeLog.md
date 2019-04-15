@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.0.1
+* Fix race condition when adding entries to journal.
+
 ## Version 1.0.0
 * Release version 1.0 \o/
 * Add support for read only journal membership
