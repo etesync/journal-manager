@@ -146,15 +146,11 @@ class EntryViewSet(BaseViewSet):
 
     def create(self, request, journal_uid=None):
         queryset = self.get_queryset(use_last=False)
-        last_in_db = queryset.last()
 
         last = request.query_params.get('last', None)
         last_entry = None
         if last is not None:
             last_entry = get_object_or_404(queryset, uid=last)
-
-        if last_entry != last_in_db:
-            return Response({}, status=status.HTTP_409_CONFLICT)
 
         journal_object = self.get_journal_queryset(Journal.objects).get(uid=journal_uid)
 
@@ -163,6 +159,11 @@ class EntryViewSet(BaseViewSet):
         if serializer.is_valid():
             try:
                 with transaction.atomic():
+                    # We use select_for_update in the next line as to get a lock on the insert
+                    last_in_db = queryset.select_for_update().last()
+                    if last_entry != last_in_db:
+                        return Response({}, status=status.HTTP_409_CONFLICT)
+
                     serializer.save(journal=journal_object)
             except IntegrityError:
                 content = {'code': 'integrity_error'}
