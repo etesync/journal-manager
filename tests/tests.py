@@ -435,9 +435,10 @@ class ApiOldEntryTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Add
+        entry2 = models.Entry.objects.last()
         ## With correct last
         entry = models.Entry(journal=self.journal, uid=self.get_random_hash(), content=b'3')
-        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(models.Entry.objects.last().uid), self.serializer(entry).data)
+        response = self.client.post(reverse(self.LIST, kwargs={'journal_uid': self.journal.uid}) + '?last={}'.format(entry2.uid), self.serializer(entry).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         ## With incorrect last
