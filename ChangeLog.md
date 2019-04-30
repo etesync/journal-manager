@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.0.2
+* Really fix race condition when adding entries to journal.
+
 ## Version 1.0.1
 * Fix race condition when adding entries to journal.
 
