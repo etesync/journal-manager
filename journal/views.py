@@ -159,8 +159,10 @@ class EntryViewSet(BaseViewSet):
         if serializer.is_valid():
             try:
                 with transaction.atomic():
-                    # We use select_for_update in the next line as to get a lock on the insert
-                    last_in_db = queryset.select_for_update().last()
+                    # We use select_for_update in the next line as to get a lock on the insert.
+                    # After the lock is freed we get the up to date last
+                    queryset.select_for_update().last()
+                    last_in_db = queryset.last()
                     if last_entry != last_in_db:
                         return Response({}, status=status.HTTP_409_CONFLICT)
 
