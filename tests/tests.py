@@ -589,6 +589,12 @@ class JournalMembersTestCase(BaseTestCase):
                                     self.serializer(journal_member).data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        # Give a user access to non-existent journal
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.post(reverse('journal-members-list', kwargs={'journal_uid': 'aaa'}),
+                                    self.serializer(journal_member).data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
         # List
         self.client.force_authenticate(user=self.user1)
         response = self.client.get(reverse('journal-list'))
@@ -624,6 +630,11 @@ class JournalMembersTestCase(BaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['user'], self.user1.username)
+
+        # Get the members of a non-existent journal
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(reverse('journal-members-list', kwargs={'journal_uid': 'aaaa'}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Try to edit a journal when not owner but have access
         self.client.force_authenticate(user=self.user1)
