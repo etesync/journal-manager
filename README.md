@@ -7,6 +7,7 @@ This is a reusable django app that implements the server side of EteSync
 
 ![GitHub tag](https://img.shields.io/github/tag/etesync/journal-manager.svg)
 [![PyPI](https://img.shields.io/pypi/v/django-etesync-journal.svg)](https://pypi.python.org/pypi/django-etesync-journal/)
+[![Build Status](https://travis-ci.com/etesync/journal-manager.svg?branch=master)](https://travis-ci.com/etesync/journal-manager)
 [![Chat on freenode](https://img.shields.io/badge/irc.freenode.net-%23EteSync-blue.svg)](https://webchat.freenode.net/?channels=#etesync)
 
 More info is available on the [EteSync website](https://www.etesync.com)
