@@ -23,7 +23,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-2. Include the polls URLconf in your project urls.py like this:
+2. Include the "journal" URLconf in your project's urls.py like this:
 
 ```
 from django.conf.urls import include, url
