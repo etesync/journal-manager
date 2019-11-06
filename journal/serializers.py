@@ -8,8 +8,8 @@ User = get_user_model()
 
 
 class BinaryBase64Field(serializers.Field):
-    def to_representation(self, content):
-        return base64.b64encode(content).decode('ascii')
+    def to_representation(self, value):
+        return base64.b64encode(value).decode('ascii')
 
     def to_internal_value(self, data):
         return base64.b64decode(data)
@@ -37,6 +37,7 @@ class JournalSerializer(serializers.ModelSerializer):
                 return serialized_member.data['key']
             except models.JournalMember.DoesNotExist:
                 pass
+        return None
 
     def get_read_only_from_context(self, obj):
         request = self.context.get('request', None)

@@ -1,4 +1,7 @@
-class AppSettings(object):
+import sys  # noqa
+
+
+class AppSettings:
     def __init__(self, prefix):
         self.prefix = prefix
 
@@ -25,7 +28,6 @@ class AppSettings(object):
 
 # Ugly? Guido recommends this himself ...
 # http://mail.python.org/pipermail/python-ideas/2012-May/014969.html
-import sys  # noqa
 app_settings = AppSettings('JOURNAL_')
-app_settings.__name__ = __name__
+app_settings.__name__ = __name__  # pylint: disable=attribute-defined-outside-init
 sys.modules[__name__] = app_settings
