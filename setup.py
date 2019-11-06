@@ -12,7 +12,7 @@ setup(
     version='1.0.2',
     packages=find_packages(),
     include_package_data=True,
-    license='AGPLv3',
+    license='AGPL-3.0-only',
     description='The server side implementation of the EteSync protocol.',
     long_description=README,
     url='https://www.etesync.com/',
