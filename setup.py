@@ -10,7 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 setup(
     name='django-etesync-journal',
     version='1.0.2',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests*']),
     include_package_data=True,
     license='AGPL-3.0-only',
     description='The server side implementation of the EteSync protocol.',
