@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 1.0.3
+* dist: don't install the test directory.
+* Members: 404 when interacting with non existing journals.
+
 ## Version 1.0.2
 * Really fix race condition when adding entries to journal.
 
