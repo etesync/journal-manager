@@ -15,6 +15,7 @@ setup(
     license='AGPL-3.0-only',
     description='The server side implementation of the EteSync protocol.',
     long_description=README,
+    long_description_content_type='text/markdown',
     url='https://www.etesync.com/',
     author='EteSync',
     author_email='development@etesync.com',
