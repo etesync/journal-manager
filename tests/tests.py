@@ -218,7 +218,7 @@ class ApiJournalTestCase(BaseTestCase):
         self.assertEqual(journal.version, models.Journal.objects.get(uid=journal.uid).version)
 
         # Version readonly is handled in test_read_only
-        pass
+        # pass
 
     def test_filler(self):
         """Extra calls to cheat coverage (things we don't really care about)"""
@@ -226,14 +226,15 @@ class ApiJournalTestCase(BaseTestCase):
 
 
 class ApiOldEntryTestCase(BaseTestCase):
+    LIST = 'entry-list'
+    DETAIL = 'entry-detail'
+
     def setUp(self):
         super().setUp()
         self.serializer = serializers.EntrySerializer
 
         self.journal = models.Journal(owner=self.user1, uid=self.get_random_hash(), content=b'test')
         self.journal.save()
-        self.LIST = 'entry-list'
-        self.DETAIL = 'entry-detail'
 
     def test_only_owner(self):
         """Check all the endpoints correctly require authentication"""
@@ -460,11 +461,8 @@ class ApiOldEntryTestCase(BaseTestCase):
 
 
 class ApiEntryTestCase(ApiOldEntryTestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.LIST = 'journal-entries-list'
-        self.DETAIL = 'journal-entries-detail'
+    LIST = 'journal-entries-list'
+    DETAIL = 'journal-entries-detail'
 
 
 class UserInfoTestCase(BaseTestCase):
