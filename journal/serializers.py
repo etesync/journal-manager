@@ -23,10 +23,11 @@ class JournalSerializer(serializers.ModelSerializer):
     )
     key = serializers.SerializerMethodField('get_key_from_context')
     readOnly = serializers.SerializerMethodField('get_read_only_from_context')
+    lastUid = serializers.SerializerMethodField('get_last_uid')
 
     class Meta:
         model = models.Journal
-        fields = ('version', 'uid', 'content', 'owner', 'key', 'readOnly')
+        fields = ('version', 'uid', 'content', 'owner', 'key', 'readOnly', 'lastUid')
 
     def get_key_from_context(self, obj):
         request = self.context.get('request', None)
@@ -48,6 +49,12 @@ class JournalSerializer(serializers.ModelSerializer):
             except models.JournalMember.DoesNotExist:
                 pass
         return False
+
+    def get_last_uid(self, obj):
+        last = obj.entry_set.last()
+        if last:
+            return last.uid
+        return None
 
 
 class JournalUpdateSerializer(JournalSerializer):
