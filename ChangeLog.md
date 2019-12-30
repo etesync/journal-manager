@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.1.0
+* Return the UID of the last entry when returning the journal list.
+
 ## Version 1.0.3
 * dist: don't install the test directory.
 * Members: 404 when interacting with non existing journals.
