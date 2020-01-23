@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.2.0
+* Make it possible to override the drf authenticators from the app's settings.
+
 ## Version 1.1.0
 * Return the UID of the last entry when returning the journal list.
 
