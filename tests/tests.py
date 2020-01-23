@@ -765,7 +765,7 @@ class DebugOnlyTestCase(BaseTestCase):
 
         # No user
         response = self.raw_client.post(reverse('reset_debug'), {})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Disallowed user
         bad_user = User.objects.create(username='test@domain.com', email='test@domain.com')

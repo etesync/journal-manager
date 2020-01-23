@@ -234,31 +234,27 @@ class UserInfoViewSet(BaseViewSet):
         return Response(status=status.HTTP_403_FORBIDDEN)
 
 
-@csrf_exempt
-@require_POST
-def reset(request):
-    # Only run when in DEBUG mode! It's only used for tests
-    if not settings.DEBUG:
-        return HttpResponseBadRequest("Only allowed in debug mode.")
+class ResetViewSet(BaseViewSet):
+    allowed_methods = ['POST']
 
-    if not request.user.is_authenticated:
-        ret = TokenAuthentication().authenticate(request)
+    def post(self, request, *args, **kwargs):
+        # Only run when in DEBUG mode! It's only used for tests
+        if not settings.DEBUG:
+            return HttpResponseBadRequest("Only allowed in debug mode.")
 
-        if ret is None:
-            return HttpResponseBadRequest("Couldn't authenticate")
+        # Only allow local users, for extra safety
+        if not request.user.email.endswith('@localhost'):
+            return HttpResponseBadRequest("Endpoint not allowed for user.")
 
-        login(request, ret[0])
+        # Delete all of the journal data for this user for a clear test env
+        request.user.journal_set.all().delete()
+        request.user.journalmember_set.all().delete()
+        try:
+            request.user.userinfo.delete()
+        except ObjectDoesNotExist:
+            pass
 
-    # Only allow local users, for extra safety
-    if not request.user.email.endswith('@localhost'):
-        return HttpResponseBadRequest("Endpoint not allowed for user.")
+        return HttpResponse()
 
-    # Delete all of the journal data for this user for a clear test env
-    request.user.journal_set.all().delete()
-    request.user.journalmember_set.all().delete()
-    try:
-        request.user.userinfo.delete()
-    except ObjectDoesNotExist:
-        pass
 
-    return HttpResponse()
+reset = ResetViewSet.as_view({'post': 'post'})
