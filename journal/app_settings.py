@@ -25,6 +25,15 @@ class AppSettings:
             ret.append(self.import_from_str(perm))
         return ret
 
+    @property
+    def API_AUTHENTICATORS(self):
+        perms = self._setting("API_AUTHENTICATORS", ('rest_framework.authentication.TokenAuthentication',
+                                                     'rest_framework.authentication.SessionAuthentication'))
+        ret = []
+        for perm in perms:
+            ret.append(self.import_from_str(perm))
+        return ret
+
 
 # Ugly? Guido recommends this himself ...
 # http://mail.python.org/pipermail/python-ideas/2012-May/014969.html

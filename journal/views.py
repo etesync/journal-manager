@@ -11,7 +11,6 @@ from django.views.decorators.http import require_POST
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from . import app_settings, permissions, paginators
 from .models import Entry, Journal, UserInfo, JournalMember
@@ -26,7 +25,7 @@ User = get_user_model()
 
 
 class BaseViewSet(viewsets.ModelViewSet):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
 
     def get_serializer_class(self):
