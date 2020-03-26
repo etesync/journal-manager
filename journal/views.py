@@ -256,7 +256,7 @@ class ResetViewSet(BaseViewSet):
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
         # Only allow local users, for extra safety
-        if not request.user.email.endswith('@localhost'):
+        if not getattr(request.user, User.USERNAME_FIELD).endswith('@localhost'):
             return HttpResponseBadRequest("Endpoint not allowed for user.")
 
         # Delete all of the journal data for this user for a clear test env
