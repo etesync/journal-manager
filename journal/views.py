@@ -42,7 +42,7 @@ User = get_user_model()
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
-    renderer_classes = [JSONRenderer] + [BrowsableAPIRenderer] if settings.DEBUG else []
+    renderer_classes = [JSONRenderer] + ([BrowsableAPIRenderer] if settings.DEBUG else [])
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
