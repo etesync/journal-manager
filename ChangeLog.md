@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 1.2.1
+* Only enable browsable API when debugging is on.
+* Improve the debug reset view
+
 ## Version 1.2.0
 * Make it possible to override the drf authenticators from the app's settings.
 
