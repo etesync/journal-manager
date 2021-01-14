@@ -3,6 +3,8 @@
   <h1 align="center">EteSync - Secure Data Sync</h1>
 </p>
 
+**IMPORTANT:** This repo is deprecated, please use refer to https://github.com/etesync/server/
+
 This is a reusable django app that implements the server side of EteSync
 
 ![GitHub tag](https://img.shields.io/github/tag/etesync/journal-manager.svg)
