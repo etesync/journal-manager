@@ -14,6 +14,7 @@
 
 import base64
 
+from django.db.models.expressions import RawSQL
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from . import models
@@ -65,7 +66,9 @@ class JournalSerializer(serializers.ModelSerializer):
         return False
 
     def get_last_uid(self, obj):
-        last = obj.entry_set.last()
+        last = models.Entry.objects.filter(
+                id=RawSQL('SELECT MAX(journal_entry.id) FROM journal_entry WHERE journal_entry.journal_id = %s GROUP BY journal_entry.journal_id', (obj.id, ))
+            ).first()
         if last:
             return last.uid
         return None
