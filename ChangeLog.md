@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.2.3
+* Fix performance issues with get_last_uid
+
 ## Version 1.2.2
 * Fix only enabling browsable API when debugging is on.
 
